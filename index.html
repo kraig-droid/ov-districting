@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OV District Maker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+    <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script>
+    <!-- <script src="//unpkg.com/alpinejs"></script> -->
+    <style>
+        :root {
+            --btn-active-color: #556b2f;
+            --btn-inactive-color: #d2b48c;
+            /* holding down */
+            --btn-activating-color: #3c3c3c;
+            --btn-hover-color: #228b22;
+        }
+
+        html,
+        body {
+            height: 99%;
+            width: 99%
+        }
+
+        #map {
+            height: 88%;
+            width: 100%;
+        }
+
+        .label {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            font-weight: bold;
+            color: black;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+        }
+
+        .my-leaflet-control {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a {
+            background-color: var(--btn-inactive-color);
+            border: 1px solid #ccc;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+            font-size: 18px;
+            /* cursor: pointer; */
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a:hover {
+            background-color: var(--btn-hover-color);
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a.active {
+            background-color: var(--btn-active-color);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a.disabled {
+            background-color: gray;
+        }
+
+        .leaflet-bar.leaflet-control.my-leaflet-control a:active {
+            background-color: var(--btn-activating-color);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .dimmed-map {
+            filter: brightness(0.7) contrast(1.2);
+        }
+
+        .my-leaflet-control a.hidden {
+            display: none;
+        }
+
+        .block-feature.leaflet-interactive,
+        .cursor-plus {
+            cursor: url('plus.png') 15 15, auto !important;
+        }
+
+        .cursor-minus,
+        .cursor-minus .block-feature.leaflet-interactive {
+            cursor: url('minus.png') 15 15, auto !important;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Zebra striping for better readability */
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Responsive design */
+        @media screen and (max-width: 600px) {
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px 10px;
+            }
+        }
+
+        /* Optional: Add rounded corners to the table */
+        table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <p>image:
+        <img src="plus.png" alt="">
+    </p> -->
+    <div id="map"></div>
+    <div>
+        <label><input type="checkbox" id="blocksToggle" checked>Show Blocks</label>
+        <label><input type="checkbox" id="boundaryToggle" checked>Show Boundary</label>
+        <!-- <span id="dragState-el"></span>
+        <span id="isDragging-el"></span>
+        <span id="selectedTotal-el"></span>
+        <span id="numDistricts-el"></span>
+        <span id="activeDistrict-el"></span> -->
+    </div>
+    <p id="totals" style="font-size: x-large;">
+    <table id="totals-table">
+        <thead>
+            <tr>
+                <th scope="col">Not In a District</th>
+                <th scope="col">District Target</th>
+                <th scope="col">1</th>
+                <th scope="col">2</th>
+                <th scope="col" class="col-3">3</th>
+                <th scope="col" class="col-4">4</th>
+                <th scope="col" class="col-5">5</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td id="total-undistricted"></td>
+                <td id="district-target"></td>
+                <td id="total-1"></td>
+                <td id="total-2"></td>
+                <td id="total-3" class="col-3"></td>
+                <td id="total-4" class="col-4"></td>
+                <td id="total-5" class="col-5"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td id="percent-1"></td>
+                <td id="percent-2"></td>
+                <td id="percent-3" class="col-3"></td>
+                <td id="percent-4" class="col-4"></td>
+                <td id="percent-5" class="col-5"></td>
+            </tr>
+        </tbody>
+    </table>
+    </p>
+    <script>
+        const cldebug = false;
+        const DragStates = Object.freeze({
+            PAN: Symbol('pan'),
+            TBD: Symbol('TBD'),
+            SELECT: Symbol('select'),
+            DESELECT: Symbol('deselect'),
+        });
+        const districtColor = {
+            1: 'orange',
+            2: 'green',
+            3: 'indigo',
+            4: 'violet',
+            5: 'blue',
+        }
+
+        function getColor(geoJSONFeature) {
+            const district = geoJSONFeature.properties.district;
+            if (district) {
+                return districtColor[district];
+            }
+            return 'red';
+        }
+
+        let dragState = DragStates.PAN;
+        let isDragging = false;
+        let selectedTotal = 0;
+        let numDistricts = 2;
+        let activeDistrict = 1;
+        const maxNumDistricts = 5;
+        // let blocksLayer = null;
+        var blocksLayer = null;
+        let boundaryLayer = null;
+        let leafletFeatureToIgnoreClickBecauseMousedownHandledIt = null;
+        let grandTotal = 0;
+        let districtTarget = undefined;
+
+        hideExtraColumns();
+
+        // function updateDebug() {
+        //     for (v of ['dragState', 'isDragging', 'selectedTotal', 'numDistricts', 'activeDistrict']) {
+        //         document.querySelector(`#${v}-el`).textContent = `${v}: ${String(eval(v))}`;
+        //     }
+        // };
+        // document.addEventListener('click', e => updateDebug());
+        // setInterval(() => updateDebug(), 250);
+
+        const totalDisplay = document.getElementById('totalDisplay');
+
+        const map = L.map('map').setView([41.3, -111.7], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            className: 'dimmed-map',
+        }).addTo(map);
+
+        L.Control.ModeSwitch = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+
+                this.dragToPanButton = L.DomUtil.create('a', 'pan-button active', container);
+                this.dragToPanButton.href = '#';
+                this.dragToPanButton.title = 'Drag to Pan';
+                this.dragToPanButton.innerHTML = '&#9995;'; // Hand symbol
+
+                this.dragToSelectButton = L.DomUtil.create('a', 'select-button', container);
+                this.dragToSelectButton.href = '#';
+                this.dragToSelectButton.title = 'Drag to Select';
+                this.dragToSelectButton.innerHTML = '&#9998;'; // Pen symbol
+
+                L.DomEvent.on(this.dragToPanButton, 'click dblclick', this._clickDragToPan, this);
+                L.DomEvent.on(this.dragToSelectButton, 'click dblclick', this._clickDragToSelect, this);
+
+                return container;
+            },
+
+            _clickDragToPan: function (e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                this.activatePanMode();
+            },
+
+            _clickDragToSelect: function (e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                this.activateSelectMode();
+            },
+
+            activatePanMode: function () {
+                L.DomUtil.addClass(this.dragToPanButton, 'active');
+                L.DomUtil.removeClass(this.dragToSelectButton, 'active');
+                dragState = DragStates.PAN;
+                document.querySelector('#map').classList.remove('cursor-plus');
+            },
+
+            activateSelectMode: function () {
+                L.DomUtil.removeClass(this.dragToPanButton, 'active');
+                L.DomUtil.addClass(this.dragToSelectButton, 'active');
+                dragState = DragStates.TBD;
+            }
+        });
+
+        var modeSwitch = new L.Control.ModeSwitch();
+        map.addControl(modeSwitch);
+
+        L.Control.DistrictSelector = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+
+                this.districtButtons = {};
+                for (let i = 1; i <= maxNumDistricts; i++) {
+                    this.districtButtons[i] = L.DomUtil.create(
+                        'a',
+                        `${i === 1 ? 'active' : ''}${i > numDistricts ? ' hidden' : ''}`,
+                        container
+                    );
+                    this.districtButtons[i].href = '#';
+                    this.districtButtons[i].title = `District ${i}`;
+                    this.districtButtons[i].textContent = `${i}`;
+                    this.districtButtons[i].dataset.i = i;
+                    // activeDistrict
+                    L.DomEvent.on(this.districtButtons[i], 'click dblclick', this._clickDistrict, this);
+                };
+
+                this.plus = L.DomUtil.create('a', '', container);
+                this.plus.href = '#';
+                this.plus.title = `Add District`;
+                this.plus.textContent = `+`;
+
+                this.minus = L.DomUtil.create('a', 'disabled', container);
+                this.minus.href = '#';
+                this.minus.title = `Remove District`;
+                this.minus.textContent = `-`;
+
+                L.DomEvent.on(this.plus, 'click dblclick', this._clickPlus, this);
+                L.DomEvent.on(this.minus, 'click dblclick', this._clickMinus, this);
+
+                return container;
+            },
+
+            _clickDistrict: function (e) {
+                Object.values(this.districtButtons).forEach(btn => btn.classList.remove('active'));
+                activeDistrict = Number(e.target.dataset.i);
+                this.districtButtons[activeDistrict].classList.add('active');
+            },
+
+            _clickPlus: function (e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                this.addADistrict();
+            },
+
+            addADistrict: function () {
+                if (numDistricts < maxNumDistricts) {
+                    numDistricts += 1;
+                    this.districtButtons[numDistricts].classList.remove('hidden');
+                    this.minus.classList.remove('disabled');
+                }
+
+                if (numDistricts === maxNumDistricts) {
+                    this.plus.classList.add('disabled');
+                }
+                hideExtraColumns();
+            },
+            _clickMinus: function (e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                this.removeADistrict();
+            },
+
+            removeADistrict: function () {
+                if (numDistricts > 2) {
+                    blocksLayer.eachLayer(function (layer) {
+                        if (layer.feature.properties.district === numDistricts) {
+                            layer.feature.properties.district = null;
+                        }
+                    })
+                    this.districtButtons[numDistricts].classList.add('hidden');
+                    numDistricts -= 1;
+                    this.plus.classList.remove('disabled');
+                }
+
+                if (numDistricts === maxNumDistricts) {
+                    this.minus.classList.add('disabled');
+                }
+                hideExtraColumns();
+            },
+
+        });
+
+        var districtSelector = new L.Control.DistrictSelector();
+        map.addControl(districtSelector);
+
+        L.Control.Save = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+
+                this.saveButton = L.DomUtil.create('a', '', container);
+                this.saveButton.href = '#';
+                this.saveButton.title = 'Save';
+                this.saveButton.textContent = 'Save';
+
+                L.DomEvent.on(this.saveButton, 'dblclick', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                L.DomEvent.on(this.saveButton, 'click', () => {
+                    console.log('save');
+                    saveAsJSON();
+                });
+
+                return container;
+            },
+        });
+
+        var save = new L.Control.Save();
+        map.addControl(save);
+
+        L.Control.Load = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+
+                this.loadButton = L.DomUtil.create('a', '', container);
+                this.loadButton.href = '#';
+                this.loadButton.title = 'Load';
+                this.loadButton.textContent = 'Load';
+
+                L.DomEvent.on(this.loadButton, 'dblclick', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                L.DomEvent.on(this.loadButton, 'click', () => {
+                    console.log('load');
+                    loadFile();
+                });
+
+                return container;
+            },
+        });
+
+        var load = new L.Control.Load();
+        map.addControl(load);
+
+        fetch('bound-from-qgis.geojson')
+            .then(response => response.json())
+            .then(data => {
+                boundaryLayer = L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            color: 'red',
+                            weight: 3,
+                            fillOpacity: 0,
+                        };
+                    },
+                }).addTo(map);
+            })
+            .catch(error => console.error('Error loading GeoJSON:', error));
+        blockStyleUnhighlighted = {
+            weight: 3,
+            fillOpacity: 0.3,
+        }
+
+        blockStyleHighlighted = {
+            weight: 2,
+            fillOpacity: 0.6,
+        }
+
+        fetch('candidate-blocks-2.geojson')
+            .then(response => response.json())
+            .then(data => {
+                data.features = data.features.filter(feature => feature.properties.PP_TOTAL !== 0);
+                // oids = [1940, 5884, 7037, 7038, 8159, 8222, 9325, 12623, 20217, 22563, 26912, 31566, 35805, 51442, 59164]
+                // data.features = data.features.filter(feature => oids.includes(feature.properties.OBJECTID));
+
+                data.features.forEach(f => grandTotal += f.properties.PP_TOTAL);
+
+                window.ddd = data;
+                blocksLayer = L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            className: 'block-feature',
+                            color: getColor(feature),
+                            ...blockStyleUnhighlighted,
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties) {
+                            const center = layer.getBounds().getCenter();
+                            const label = L.divIcon({
+                                className: 'label',
+                                html: `<div>${feature.properties.PP_TOTAL}</div>`,
+                                iconSize: [40, 20]
+                            });
+                            L.marker(center, { icon: label, interactive: false }).addTo(map);
+                        }
+
+                        layer.on('click', function (e) {
+                            if (cldebug) console.log('layer on (block) clicked', this.feature.properties.OBJECTID);
+                            if (
+                                !leafletFeatureToIgnoreClickBecauseMousedownHandledIt ||
+                                leafletFeatureToIgnoreClickBecauseMousedownHandledIt.feature.id !== this.feature.id
+                            ) {
+                                toggleBlock(this);
+                            }
+                        });
+
+                        layer.on('mouseover', function (e) {
+                            if (cldebug) console.log('layer on (block) mouseover', this.feature.properties.OBJECTID);
+                            // qqq
+                            this.setStyle(blockStyleHighlighted);
+                            updateCursorFromBlock(this);
+                            determineDragStateFromBlock(this);
+                            setBlockDistrictBasedOnDragState(this);
+                        });
+
+                        layer.on('mouseout', function (e) {
+                            if (cldebug) console.log('layer on (block) mouseout', this.feature.properties.OBJECTID);
+                            // qqq
+                            // mouseout will always fire before mouse over (I think!)
+                            // so here we should check if there's a block under the pointer
+                            // if there is, do nothing
+                            // if there is no block under the pointer, potentially update dragState and cursor
+                            this.setStyle(blockStyleUnhighlighted);
+
+                            // what's the logic here?
+                            // if we're PANning
+                            // - we could be moving off all blocks, and need to update cursor to hand/pan
+                            // - we could be moving into another block, but maybe we can ignore that and let it work on the cursor etc
+                            // if we're dragging
+                            // - we leave cursor and dragstate alone
+                            // if we're not dragging
+                            // - we could be moving off all blocks, and need to update cursor to plus/select
+                            // - we could be moving into another block, but maybe we can ignore that and let it work on the cursor etc
+                            if (dragState === DragStates.PAN) {
+                                if (cldebug) console.log('layer on (block) mouseout -- found PAN, removing cursor customizations');
+                                map.getContainer().classList.remove('cursor-minus', 'cursor-plus');
+                            } else if (!isDragging) {
+                                if (cldebug) console.log('layer on (block) mouseout -- found not dragging, PLUSING');
+                                map.getContainer().classList.remove('cursor-minus');
+                            } else if (false && dragState !== DragStates.PAN) {
+                                if (cldebug) console.log('layer on (block) mouseout -- not pan', dragState);
+                                const leafletFeature = getLeafletFeature(e);
+                                if (!leafletFeature) {
+                                    if (cldebug) console.log('layer on (block) mouseout -- found feature, MINUSING');
+                                    map.getContainer().classList.remove('cursor-minus');
+                                    dragState = DragStates.SELECT;
+                                }
+                            }
+                        });
+                    },
+                }).addTo(map);
+            })
+            .then(() => updateCounts())
+            .catch(error => console.error('Error loading GeoJSON:', error));
+
+        // current bug
+        // turn on drag, drag and select several, release, minus click one, it won't disappear
+
+        map.getContainer().addEventListener('mousedown', function (e) {
+            // this prevents a drag from selecting the map tools.
+            // maybe this should only happen when pan is off?
+            e.preventDefault();
+        });
+
+        function selectBlock(leafletFeature) {
+            if (cldebug) console.log('block selected');
+            leafletFeature.feature.properties.district = activeDistrict;
+            leafletFeature.setStyle({
+                color: getColor(leafletFeature.feature),
+            });
+            updateCounts();
+        };
+
+        function deselectBlock(leafletFeature) {
+            if (cldebug) console.log('block deselected');
+            leafletFeature.feature.properties.district = null;
+            leafletFeature.setStyle({
+                color: 'gray',
+            })
+            updateCounts();
+            // blocksLayer.resetStyle(leafletFeature);
+        };
+
+        function setBlockDistrictBasedOnDragState(leafletFeature) {
+            if (cldebug) console.log('set block district based on drag state');
+            if (!isDragging) return;
+            if (dragState === DragStates.SELECT) {
+                selectBlock(leafletFeature);
+            } else {
+                deselectBlock(leafletFeature);
+            }
+        }
+
+        function toggleBlock(leafletFeature) {
+            if (cldebug) console.log('toggle block');
+            if (leafletFeature.feature.properties.district === activeDistrict) {
+                deselectBlock(leafletFeature);
+            } else {
+                selectBlock(leafletFeature);
+            }
+            if (!isDragging) {
+                updateCursorFromBlock(leafletFeature);
+            }
+        }
+
+        function updateCursorFromBlock(leafletBlock) {
+            if (cldebug) console.log('updating cursor from block');
+            if (isDragging) return;
+            if (leafletBlock.feature.properties.district === activeDistrict) {
+                if (cldebug) console.log('updating cursor from block -- switching to minus');
+                map.getContainer().classList.add('cursor-minus');
+            } else {
+                if (cldebug) console.log('updating cursor from block -- switching to default');
+                map.getContainer().classList.remove('cursor-minus');
+            }
+        }
+
+        function determineDragStateFromBlock(leafletBlock) {
+            if (dragState === DragStates.PAN) {
+                if (cldebug) console.log('determining drag state from block -- PAN -- aborting');
+                return;
+            }
+            if (!isDragging) {
+                if (cldebug) console.log('determining drag state from block -- not dragging');
+                if (leafletBlock.feature.properties.district === activeDistrict) {
+                    if (cldebug) console.log('determining drag state from block -- switching to deselect');
+                    dragState = DragStates.DESELECT;
+                } else {
+                    if (cldebug) console.log('determining drag state from block -- switching to select');
+                    dragState = DragStates.SELECT;
+                }
+            }
+        }
+
+        // (perplexity) Event Order
+        // mousedown fires first when the button is pressed
+        // mouseup fires when the button is released
+        // click fires last, after both mousedown and mouseup have completed
+        // Important Distinctions
+        // Click Requirements
+        // A click event will only fire if both mousedown and mouseup occur on the same element2
+        // Users can cancel a click by moving the cursor away before releasing the mouse button2
+        // Click events have a 300ms delay on touch devices7        
+
+        map.on('mousedown', function (e) {
+            if (cldebug) console.log('mousedown');
+            // qqq
+            // mousedown happens on a click and a drag!
+            if (dragState !== DragStates.PAN) {
+                if (cldebug) console.log('disabling leaflet dragging', dragState);
+                map.dragging.disable();
+                isDragging = true;
+                // if there's a click, no problem, the click handler will change block state
+                // if there's not a click, we should set state here
+                // but we don't know if it's a click yet!
+                // so we need to set state here and tell click ('we already did it')
+
+                const leafletFeature = getLeafletFeature(e);
+                if (leafletFeature) {
+                    setBlockDistrictBasedOnDragState(leafletFeature);
+                    leafletFeatureToIgnoreClickBecauseMousedownHandledIt = leafletFeature;
+                }
+            };
+        });
+
+        map.on('mouseup', function (e) {
+            if (cldebug) console.log('mouseup');
+            // qqq
+            // mouseup happens on a click and a drag!
+            if (!isDragging) return;
+
+            isDragging = false;
+            map.dragging.enable();
+
+            const leafletFeature = getLeafletFeature(e);
+            if (leafletFeature) {
+                if (cldebug) console.log('mouseup -- found feature', leafletFeature.feature.properties.OBJECTID);
+                updateCursorFromBlock(leafletFeature);
+                determineDragStateFromBlock(leafletFeature);
+            } else {
+                if (cldebug) console.log('mouseup -- no feature -- SELECT & remove minus');
+                map.getContainer().classList.remove('cursor-minus');
+                dragState = DragStates.SELECT;
+            }
+
+            setTimeout(() => {
+                leafletFeatureToIgnoreClickBecauseMousedownHandledIt = null;
+            }, 0);
+        });
+
+        map.on('mousemove', function (e) {
+            // qqq
+            // here we're working on SELECT vs DESELECT, and the pointer moving
+            // off a block into empty space (mostly?)
+            // otherwise, SELECT vs DESELECT is handled in mouseenter
+            // hmmm
+            // well, this only deals with TBD
+            // I guess mouseout handles stuff
+            if (cldebug) console.log('mousemove -- dragState is', dragState);
+            if (dragState === DragStates.PAN) return;
+
+
+            // I thought there might be other layers not blocks interfering
+            // const targetLayer = leafletPip.pointInLayer(e.latlng, blocksLayer);
+            // if (targetLayer.length) {
+            //     for (const leafletFeature of targetLayer) {
+            //         if (!leafletFeature.feature.properties.PP_TOTAL) {
+
+            //             if (cldebug) console.log(leafletFeature.feature.properties);;
+            //         }
+            //     }
+            // }
+
+            let leafletFeature = undefined;
+
+            if (dragState === DragStates.TBD) {
+                if (cldebug) console.log('mousemove -- found TBD');
+                leafletFeature = getLeafletFeature(e);
+                if (leafletFeature) {
+                    if (cldebug) console.log('mousemove -- found TBD, then feature');
+                    if (leafletFeature.properties.district === activeDistrict) {
+                        if (cldebug) console.log('mousemove -- found TBD, then feature, then district match');
+                        dragState = DragStates.DESELECT;
+                        document.querySelector('#map').classList.add('cursor-minus');
+                    } else {
+                        if (cldebug) console.log('mousemove -- found TBD, then feature, then district MISmatch');
+                        dragState = DragStates.SELECT;
+                        document.querySelector('#map').classList.add('cursor-plus');
+                    }
+                } else {
+                    if (cldebug) console.log('mousemove -- found TBD, then no feature');
+                    dragState = DragStates.SELECT;
+                    document.querySelector('#map').classList.add('cursor-plus');
+                }
+            }
+
+        });
+
+
+        function updateTotalDisplay() {
+            totalDisplay.textContent = `Total: ${selectedTotal}`;
+        }
+
+
+        function getLeafletFeature(e) {
+            const targetLayer = leafletPip.pointInLayer(e.latlng, blocksLayer);
+            if (targetLayer.length) {
+                return targetLayer[0];
+            }
+            return null;
+        }
+
+        function toggleDragState() {
+            if (dragState === DragStates.SELECT) {
+                dragState = DragStates.DESELECT;
+            } else if (dragState === DragStates.DESELECT) {
+                dragState = DragStates.SELECT;
+            }
+        }
+
+        function updateCounts() {
+            const counts = {
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+            }
+            let selectedTotal = 0;
+            if (blocksLayer) {
+                blocksLayer.eachLayer(function (layer) {
+                    if (layer.feature.properties.district) {
+                        selectedTotal += layer.feature.properties.PP_TOTAL;
+                    }
+                    counts[layer.feature.properties.district] += layer.feature.properties.PP_TOTAL;
+                });
+            }
+
+            districtTarget = Math.round(grandTotal / numDistricts)
+            document.querySelector('#district-target').textContent = districtTarget.toLocaleString();
+            document.querySelector('#total-undistricted').textContent = (grandTotal - selectedTotal).toLocaleString();
+
+            for (let i = 1; i <= 5; i++) {
+                document.querySelector(`#total-${i}`).textContent = counts[i];
+                document.querySelector(`#percent-${i}`).textContent = Math.round(counts[i] / districtTarget * 100);
+            }
+
+        };
+
+        function hideExtraColumns() {
+            for (let i = 3; i <= 5; i++) {
+                if (i > numDistricts) {
+                    document.querySelectorAll(`.col-${i}`).forEach(e => e.classList.add('hidden'));
+                } else {
+                    document.querySelectorAll(`.col-${i}`).forEach(e => e.classList.remove('hidden'));
+                }
+            }
+            updateCounts();
+        }
+
+        // function selectBlock(leafletBlock) {
+        //     if (dragState === DragStates.SELECT) {
+        //         leafletBlock.properties.district = activeDistrict;
+        //     } else if (dragState === DragStates.DESELECT) {
+        //         leafletBlock.properties.district = undefined;
+        //     };
+        //     leafletBlock.setStyle({
+        //         color: leafletBlock.properties.painted ? 'green' : 'gray'
+        //     })
+        // };
+
+        // document.getElementById('blocksToggle').addEventListener('change', function (e) {
+        //     if (e.target.checked) {
+        //         map.addLayer(blocksLayer);
+        //     } else {
+        //         map.removeLayer(blocksLayer);
+        //     }
+        // });
+
+        // document.getElementById('boundaryToggle').addEventListener('change', function (e) {
+        //     if (e.target.checked) {
+        //         map.addLayer(boundaryLayer);
+        //     } else {
+        //         map.removeLayer(boundaryLayer);
+        //     }
+        // });
+
+        function saveAsJSON() {
+            const lls = [];
+            blocksLayer.eachLayer(l => lls.push(l));
+
+            // const data = lls.map(l => ({
+            //     objectId: l.feature.properties.OBJECTID,
+            //     district: l.feature.properties.district || null,
+            // })
+            const data = lls.reduce((acc, l) => {
+                acc[l.feature.properties.OBJECTID] = l.feature.properties.district || null;
+                return acc;
+            }, {});
+            window.sdata = data;
+
+            const blob = new Blob([JSON.stringify(data, null, 2)],
+                { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+
+
+            const link = document.createElement('a');
+            link.href = url;
+            let filename = prompt("Downloading. Please enter filename. (Extension will be .json)", 'ov-districting');
+            if (filename) {
+                if (!filename.endsWith('.json')) {
+                    filename += '.json';
+                }
+                link.download = filename;
+                link.click();
+            }
+
+            window.URL.revokeObjectURL(url);
+        }
+
+        async function loadFile() {
+            try {
+                // Configure options for the file picker
+                const pickerOptions = {
+                    types: [
+                        {
+                            description: 'OV Districting',
+                            accept: {
+                                'application/json': ['.json'],
+                            }
+                        }
+                    ],
+                    excludeAcceptAllOption: false,
+                    multiple: false,
+                };
+
+                // Show the file picker
+                const [fileHandle] = await window.showOpenFilePicker(pickerOptions);
+                const file = await fileHandle.getFile();
+
+                // Read the file contents
+                const contents = await file.text();
+                data = JSON.parse(contents);
+                window.ldata = data;
+
+                blocksLayer.eachLayer(l => {
+                    const district = data[l.feature.properties.OBJECTID];
+                    l.feature.properties.district = district || undefined;
+                    if (district) {
+                        l.setStyle({
+                            color: districtColor[district],
+                        });
+                    }
+                });
+                updateCounts();
+
+            } catch (err) {
+                // User cancelled or there was an error
+                console.error('Error opening file:', err);
+                return null;
+            }
+        }
+
+    </script>
+
+</html>
