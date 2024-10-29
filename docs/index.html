@@ -186,6 +186,15 @@
     </div>
     <p id="totals">
     <table id="totals-table">
+        <colgroup>
+            <col>
+            <col>
+            <col id="col-1">
+            <col id="col-2">
+            <col id="col-3">
+            <col id="col-4">
+            <col id="col-5">
+        </colgroup>
         <thead>
             <tr>
                 <th scope="col">Not In a District</th>
@@ -227,6 +236,7 @@
             SELECT: Symbol('select'),
             DESELECT: Symbol('deselect'),
         });
+
         const districtColor = {
             1: 'orange',
             2: 'green',
@@ -234,6 +244,7 @@
             4: 'violet',
             5: 'blue',
         }
+
 
         function getColor(geoJSONFeature) {
             const district = geoJSONFeature.properties.district;
