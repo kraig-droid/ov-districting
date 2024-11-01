@@ -19,6 +19,11 @@
             /* holding down */
             --btn-activating-color: #3c3c3c;
             --btn-hover-color: #228b22;
+            --district-color-1: orange;
+            --district-color-2: green;
+            --district-color-3: indigo;
+            --district-color-4: violet;
+            --district-color-5: blue;
         }
 
         body {
@@ -52,6 +57,58 @@
         .my-leaflet-control {
             display: flex;
             flex-direction: row;
+        }
+
+        .district-controls {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .district-controls a:hover {
+            filter: brightness(90%);
+        }
+
+        .district-controls a {
+            width: 30px;
+            height: 30px;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .district-controls a.active {
+            /* Make active button more prominent */
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+
+        #d-btn-1 {
+            border: 4px solid var(--district-color-1);
+            background-color: var(--district-color-1);
+        }
+
+        #d-btn-2 {
+            border: 4px solid var(--district-color-2);
+            background-color: var(--district-color-2);
+            color: white;
+        }
+
+        #d-btn-3 {
+            border: 4px solid var(--district-color-3);
+            background-color: var(--district-color-3);
+            color: white;
+        }
+
+        #d-btn-4 {
+            border: 4px solid var(--district-color-4);
+            background-color: var(--district-color-4);
+        }
+
+        #d-btn-5 {
+            border: 4px solid var(--district-color-5);
+            background-color: var(--district-color-5);
+            color: white;
         }
 
         .leaflet-bar.leaflet-control.my-leaflet-control a {
@@ -99,7 +156,7 @@
             filter: brightness(0.7) contrast(1.2);
         }
 
-        .my-leaflet-control a.hidden {
+        .district-controls a.hidden {
             display: none;
         }
 
@@ -136,11 +193,6 @@
             color: #333;
         }
 
-        tr:hover {
-            background-color: #f5f5f5;
-            transition: background-color 0.3s ease;
-        }
-
         /* Zebra striping for better readability */
         tbody tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -167,22 +219,41 @@
         .hidden {
             display: none;
         }
+
+        #col-1 {
+            background-color: var(--district-color-1);
+        }
+
+        #col-2 {
+            background-color: var(--district-color-2);
+        }
+
+        #col-3 {
+            background-color: var(--district-color-3);
+        }
+
+        #col-4 {
+            background-color: var(--district-color-4);
+        }
+
+        #col-5 {
+            background-color: var(--district-color-5);
+        }
+
+        #total-2,
+        #total-3,
+        #total-5 {
+            color: white;
+            ;
+        }
     </style>
 </head>
 
 <body>
-    <!-- <p>image:
-        <img src="plus.png" alt="">
-    </p> -->
     <div id="map"></div>
     <div id="below-map">
-        <label><input type="checkbox" id="blocksToggle" checked>Show Blocks</label>
-        <label><input type="checkbox" id="boundaryToggle" checked>Show Boundary</label>
-        <!-- <span id="dragState-el"></span>
-        <span id="isDragging-el"></span>
-        <span id="selectedTotal-el"></span>
-        <span id="numDistricts-el"></span>
-        <span id="activeDistrict-el"></span> -->
+        <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
+        <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
     </div>
     <p id="totals">
     <table id="totals-table">
@@ -248,6 +319,14 @@
 
         function getColor(geoJSONFeature) {
             const district = geoJSONFeature.properties.district;
+
+            if (district) {
+                return (
+                    getComputedStyle(document.documentElement)
+                        .getPropertyValue(`--district-color-${district}`)
+                )
+            }
+
             if (district) {
                 return districtColor[district];
             }
@@ -344,7 +423,7 @@
             },
 
             onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control district-controls');
 
                 this.districtButtons = {};
                 for (let i = 1; i <= maxNumDistricts; i++) {
@@ -357,7 +436,8 @@
                     this.districtButtons[i].title = `District ${i}`;
                     this.districtButtons[i].textContent = `${i}`;
                     this.districtButtons[i].dataset.i = i;
-                    // activeDistrict
+                    this.districtButtons[i].id = `d-btn-${i}`;
+
                     L.DomEvent.on(this.districtButtons[i], 'click dblclick', this._clickDistrict, this);
                 };
 
@@ -488,20 +568,27 @@
         var load = new L.Control.Load();
         map.addControl(load);
 
-        fetch('bound-from-qgis.geojson')
+        // fetch('bound-from-qgis.geojson')
+        fetch('boundary_07_30_24.geojson')
             .then(response => response.json())
             .then(data => {
                 boundaryLayer = L.geoJSON(data, {
                     style: function (feature) {
                         return {
-                            color: 'red',
+                            color: 'black',
                             weight: 3,
                             fillOpacity: 0,
+                            dashArray: '4,4',
                         };
                     },
-                }).addTo(map);
+                })
+
+                if (document.getElementById('boundary-toggle').checked) {
+                    map.addLayer(boundaryLayer);
+                }
             })
             .catch(error => console.error('Error loading GeoJSON:', error));
+
         blockStyleUnhighlighted = {
             weight: 3,
             fillOpacity: 0.3,
@@ -512,7 +599,8 @@
             fillOpacity: 0.6,
         }
 
-        fetch('candidate-blocks-2.geojson')
+        // fetch blocks
+        fetch('candidate-blocks-3.geojson')
             .then(response => response.json())
             .then(data => {
                 data.features = data.features.filter(feature => feature.properties.PP_TOTAL !== 0);
@@ -829,7 +917,7 @@
 
             for (let i = 1; i <= 5; i++) {
                 document.querySelector(`#total-${i}`).textContent = counts[i];
-                document.querySelector(`#percent-${i}`).textContent = Math.round(counts[i] / districtTarget * 100);
+                document.querySelector(`#percent-${i}`).textContent = `${Math.round(counts[i] / districtTarget * 100)} %`;
             }
 
         };
@@ -845,41 +933,10 @@
             updateCounts();
         }
 
-        // function selectBlock(leafletBlock) {
-        //     if (dragState === DragStates.SELECT) {
-        //         leafletBlock.properties.district = activeDistrict;
-        //     } else if (dragState === DragStates.DESELECT) {
-        //         leafletBlock.properties.district = undefined;
-        //     };
-        //     leafletBlock.setStyle({
-        //         color: leafletBlock.properties.painted ? 'green' : 'gray'
-        //     })
-        // };
-
-        // document.getElementById('blocksToggle').addEventListener('change', function (e) {
-        //     if (e.target.checked) {
-        //         map.addLayer(blocksLayer);
-        //     } else {
-        //         map.removeLayer(blocksLayer);
-        //     }
-        // });
-
-        // document.getElementById('boundaryToggle').addEventListener('change', function (e) {
-        //     if (e.target.checked) {
-        //         map.addLayer(boundaryLayer);
-        //     } else {
-        //         map.removeLayer(boundaryLayer);
-        //     }
-        // });
-
         function saveAsJSON() {
             const lls = [];
             blocksLayer.eachLayer(l => lls.push(l));
 
-            // const data = lls.map(l => ({
-            //     objectId: l.feature.properties.OBJECTID,
-            //     district: l.feature.properties.district || null,
-            // })
             const data = lls.reduce((acc, l) => {
                 acc[l.feature.properties.OBJECTID] = l.feature.properties.district || null;
                 return acc;
@@ -930,16 +987,29 @@
                 data = JSON.parse(contents);
                 window.ldata = data;
 
+                let largestDistrictFoundInFile = 2;
                 blocksLayer.eachLayer(l => {
                     const district = data[l.feature.properties.OBJECTID];
                     l.feature.properties.district = district || undefined;
                     if (district) {
+                        largestDistrictFoundInFile = Math.max(largestDistrictFoundInFile, district);
                         l.setStyle({
                             color: districtColor[district],
                         });
                     }
                 });
                 updateCounts();
+
+                if (largestDistrictFoundInFile > numDistricts) {
+                    numDistricts = largestDistrictFoundInFile;
+                    hideExtraColumns();
+                    // id d-btn-3
+                    for (let i = 3; i <= 5; i++) {
+                        if (i <= numDistricts) {
+                            document.querySelector(`#d-btn-${i}`).classList.remove('hidden');
+                        }
+                    }
+                }
 
             } catch (err) {
                 // User cancelled or there was an error
@@ -948,6 +1018,30 @@
             }
         }
 
+        // toggles
+        document.getElementById('blocks-toggle').addEventListener('change', function () {
+            if (this.checked) {
+                if (blocksLayer) {
+                    map.addLayer(blocksLayer);
+                }
+            } else {
+                if (blocksLayer) {
+                    map.removeLayer(blocksLayer);
+                }
+            }
+        });
+
+        document.getElementById('boundary-toggle').addEventListener('change', function () {
+            if (this.checked) {
+                if (boundaryLayer) {
+                    map.addLayer(boundaryLayer);
+                }
+            } else {
+                if (boundaryLayer) {
+                    map.removeLayer(boundaryLayer);
+                }
+            }
+        });
     </script>
 
 </html>
