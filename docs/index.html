@@ -111,6 +111,17 @@
             color: white;
         }
 
+        .leaflet-bar.leaflet-control.word-buttons a {
+            background-color: var(--btn-inactive-color);
+            border: 1px solid #ccc;
+            line-height: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: black;
+            font-size: 18px;
+            width: unset;
+        }
+
         .leaflet-bar.leaflet-control.my-leaflet-control a {
             background-color: var(--btn-inactive-color);
             border: 1px solid #ccc;
@@ -246,6 +257,10 @@
             color: white;
             ;
         }
+
+        #below-map label {
+            border: gray 1px solid;
+        }
     </style>
 </head>
 
@@ -254,6 +269,10 @@
     <div id="below-map">
         <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
         <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
+        <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
+        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
+                value="100"></label>
+    </div>
     </div>
     <p id="totals">
     <table id="totals-table">
@@ -300,6 +319,7 @@
     </table>
     </p>
     <script>
+        const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const cldebug = false;
         const DragStates = Object.freeze({
             PAN: Symbol('pan'),
@@ -516,7 +536,7 @@
             },
 
             onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
 
                 this.saveButton = L.DomUtil.create('a', '', container);
                 this.saveButton.href = '#';
@@ -545,7 +565,7 @@
             },
 
             onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control my-leaflet-control');
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
 
                 this.loadButton = L.DomUtil.create('a', '', container);
                 this.loadButton.href = '#';
@@ -567,6 +587,55 @@
 
         var load = new L.Control.Load();
         map.addControl(load);
+
+        L.Control.Share = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
+
+                this.shareButton = L.DomUtil.create('a', '', container);
+                this.shareButton.href = '#';
+                this.shareButton.title = 'Share';
+                this.shareButton.textContent = 'Copy Link to Clipboard';
+
+                L.DomEvent.on(this.shareButton, 'dblclick', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                L.DomEvent.on(this.shareButton, 'click', () => {
+                    let data = blocksToObject();
+                    let arrays = [[], [], [], [], []];
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            const district = data[key];
+                            if (district) {
+                                arrays[district - 1].push(parseInt(key));
+                            }
+                        }
+                    }
+                    arrays = arrays.map(compressArray);
+                    const safeData = arrays.map((x) => x.join(',')).join('|');
+                    const url = `https://ov-districting.hbhome.com/?distData=${safeData}`;
+                    navigator.clipboard.writeText(url);
+                    // const r = processDistDataFromUrl(url);
+                    // const r2 = Object.entries(r).reduce(
+                    //     (arrays, [k, v]) => {
+                    //         arrays[v - 1].push(k);
+                    //         return arrays;
+                    //     },
+                    //     [[], [], [], [], []]
+                    // );
+                });
+
+                return container;
+            }
+        })
+
+        var share = new L.Control.Share();
+        map.addControl(share);
 
         // fetch('bound-from-qgis.geojson')
         fetch('boundary_07_30_24.geojson')
@@ -590,12 +659,13 @@
             .catch(error => console.error('Error loading GeoJSON:', error));
 
         blockStyleUnhighlighted = {
-            weight: 3,
             fillOpacity: 0.3,
+            color: 'white',
+            opacity: 0.3,
+            weight: 1,
         }
 
         blockStyleHighlighted = {
-            weight: 2,
             fillOpacity: 0.6,
         }
 
@@ -614,19 +684,19 @@
                     style: function (feature) {
                         return {
                             className: 'block-feature',
-                            color: getColor(feature),
+                            fillColor: getColor(feature),
                             ...blockStyleUnhighlighted,
                         };
                     },
                     onEachFeature: function (feature, layer) {
                         if (feature.properties) {
-                            const center = layer.getBounds().getCenter();
-                            const label = L.divIcon({
-                                className: 'label',
-                                html: `<div>${feature.properties.PP_TOTAL}</div>`,
-                                iconSize: [40, 20]
-                            });
-                            L.marker(center, { icon: label, interactive: false }).addTo(map);
+                            // const center = layer.getBounds().getCenter();
+                            // const label = L.divIcon({
+                            //     className: 'label',
+                            //     html: `<div>${feature.properties.PP_TOTAL}</div>`,
+                            //     iconSize: [40, 20]
+                            // });
+                            // L.marker(center, { icon: label, interactive: false }).addTo(map);
                         }
 
                         layer.on('click', function (e) {
@@ -685,7 +755,10 @@
                     },
                 }).addTo(map);
             })
-            .then(() => updateCounts())
+            .then(() => {
+                processDistDataFromUrl();
+                updateCounts();
+            })
             .catch(error => console.error('Error loading GeoJSON:', error));
 
         // current bug
@@ -701,7 +774,7 @@
             if (cldebug) console.log('block selected');
             leafletFeature.feature.properties.district = activeDistrict;
             leafletFeature.setStyle({
-                color: getColor(leafletFeature.feature),
+                fillColor: getColor(leafletFeature.feature),
             });
             updateCounts();
         };
@@ -710,7 +783,7 @@
             if (cldebug) console.log('block deselected');
             leafletFeature.feature.properties.district = null;
             leafletFeature.setStyle({
-                color: 'gray',
+                fillColor: 'red',
             })
             updateCounts();
             // blocksLayer.resetStyle(leafletFeature);
@@ -933,7 +1006,7 @@
             updateCounts();
         }
 
-        function saveAsJSON() {
+        function blocksToObject() {
             const lls = [];
             blocksLayer.eachLayer(l => lls.push(l));
 
@@ -941,6 +1014,12 @@
                 acc[l.feature.properties.OBJECTID] = l.feature.properties.district || null;
                 return acc;
             }, {});
+
+            return data;
+        }
+
+        function saveAsJSON() {
+            const data = blocksToObject();
             window.sdata = data;
 
             const blob = new Blob([JSON.stringify(data, null, 2)],
@@ -994,7 +1073,7 @@
                     if (district) {
                         largestDistrictFoundInFile = Math.max(largestDistrictFoundInFile, district);
                         l.setStyle({
-                            color: districtColor[district],
+                            fillColor: districtColor[district],
                         });
                     }
                 });
@@ -1003,7 +1082,6 @@
                 if (largestDistrictFoundInFile > numDistricts) {
                     numDistricts = largestDistrictFoundInFile;
                     hideExtraColumns();
-                    // id d-btn-3
                     for (let i = 3; i <= 5; i++) {
                         if (i <= numDistricts) {
                             document.querySelector(`#d-btn-${i}`).classList.remove('hidden');
@@ -1042,6 +1120,146 @@
                 }
             }
         });
+
+        function toBase62(num) {
+            if (num === 0) return BASE62[0];
+            let result = '';
+            while (num > 0) {
+                result = BASE62[num % 62] + result;
+                num = Math.floor(num / 62);
+            }
+            return result;
+        }
+
+        function deltaEncode(numbers) {
+            return numbers.reduce((acc, num, index) => {
+                if (index === 0) acc.push(num);
+                else acc.push(num - numbers[index - 1]);
+                return acc;
+            }, []);
+        }
+
+        function compressArray(arr) {
+            return deltaEncode(arr.sort((a, b) => a - b))
+                .map(toBase62);
+        }
+        function fromBase62(str) {
+            return str.split('').reduce((acc, char) => acc * 62 + BASE62.indexOf(char), 0);
+        }
+
+        function deltaDecode(numbers) {
+            return numbers.reduce((acc, num, index) => {
+                if (index === 0) acc.push(num);
+                else acc.push(num + acc[index - 1]);
+                return acc;
+            }, []);
+        }
+
+        function decompressArray(str) {
+            if (str === '') return [];
+            return deltaDecode(str.split(',').map(fromBase62)).sort((a, b) => a - b);
+        }
+
+        function processDistDataFromUrl() {
+            const url = new URL(window.location.href);
+            const params = new URLSearchParams(url.search);
+            const distDataParam = params.get('distData');
+            if (!distDataParam) {
+                return;
+            }
+
+            const arrays = distDataParam.split('|').map(decompressArray);
+
+            const data = {};
+            arrays.forEach((arr, index) => {
+                arr.forEach(blockId => {
+                    if (blockId !== 0) {  // Ignore 0 values
+                        data[blockId] = index + 1;
+                    }
+                });
+            });
+
+            let largestDistrictFoundInFile = 2;
+            blocksLayer.eachLayer(l => {
+                const district = data[l.feature.properties.OBJECTID];
+                l.feature.properties.district = district || undefined;
+                if (district) {
+                    largestDistrictFoundInFile = Math.max(largestDistrictFoundInFile, district);
+                    l.setStyle({
+                        fillColor: districtColor[district],
+                    });
+                }
+            });
+
+            params.delete('distData');
+            window.history.pushState({}, '', `${url.pathname}?${params}`);
+
+            updateCounts();
+
+            if (largestDistrictFoundInFile > numDistricts) {
+                numDistricts = largestDistrictFoundInFile;
+                hideExtraColumns();
+                for (let i = 3; i <= 5; i++) {
+                    if (i <= numDistricts) {
+                        document.querySelector(`#d-btn-${i}`).classList.remove('hidden');
+                    }
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const brightnessSlider = document.getElementById('map-brightness-slider');
+            const map = document.querySelector('.dimmed-map');
+
+            const mapStyle = window.getComputedStyle(map);
+
+            const filterValue = mapStyle.getPropertyValue('filter');
+            const brightnessMatch = filterValue.match(/brightness\(([+-]?\d*\.?\d+)\)/);
+
+            if (brightnessMatch) {
+                const initialBrightness = parseFloat(brightnessMatch[1]);
+                brightnessSlider.value = initialBrightness * 100;
+            }
+
+            brightnessSlider.addEventListener('input', function () {
+                const brightness = this.value / 100;
+                map.style.filter = `brightness(${brightness})`;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const brightnessSlider = document.getElementById('district-brightness-slider');
+            brightnessSlider.value = blockStyleUnhighlighted.fillOpacity * 100;
+
+            brightnessSlider.addEventListener('input', function () {
+                blockStyleUnhighlighted.fillOpacity = this.value / 100;
+                blocksLayer.eachLayer(function (layer) {
+                    layer.setStyle(blockStyleUnhighlighted);
+                })
+            });
+        });
+
+        let labelGroup = L.layerGroup().addTo(map);
+        function updateLabels() {
+            labelGroup.clearLayers();
+
+            blocksLayer.eachLayer(function (layer) {
+                const feature = layer.feature;
+                if (feature.properties && feature.properties.PP_TOTAL) {
+                    const center = layer.getBounds().getCenter();
+                    if (map.getZoom() >= 13) {
+                        const label = L.divIcon({
+                            className: 'label',
+                            html: `<div>${feature.properties.PP_TOTAL}</div>`,
+                            iconSize: [40, 20]
+                        });
+                        L.marker(center, { icon: label, interactive: false }).addTo(labelGroup);
+                    }
+                }
+            });
+        }
+        map.on('zoomend', updateLabels);
     </script>
+    <!-- http://127.0.0.1:3000/docs/index.html?distData=4HF,4To,dM,39P|||| -->
 
 </html>
