@@ -618,7 +618,7 @@
                     }
                     arrays = arrays.map(compressArray);
                     const safeData = arrays.map((x) => x.join(',')).join('|');
-                    const url = `https://ov-districting.hbhome.com/?distData=${safeData}`;
+                    const url = `https://districting.hbhome.com/?distData=${safeData}`;
                     navigator.clipboard.writeText(url);
                     // const r = processDistDataFromUrl(url);
                     // const r2 = Object.entries(r).reduce(
