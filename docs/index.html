@@ -277,7 +277,7 @@
     <p id="totals">
     <table id="totals-table">
         <colgroup>
-            <col>
+            <!-- <col> -->
             <col>
             <col id="col-1">
             <col id="col-2">
@@ -287,7 +287,7 @@
         </colgroup>
         <thead>
             <tr>
-                <th scope="col">Not In a District</th>
+                <!-- <th scope="col">Not In a District</th> -->
                 <th scope="col">District Target</th>
                 <th scope="col">1</th>
                 <th scope="col">2</th>
@@ -298,7 +298,7 @@
         </thead>
         <tbody>
             <tr>
-                <td id="total-undistricted"></td>
+                <!-- <td id="total-undistricted"></td> -->
                 <td id="district-target"></td>
                 <td id="total-1"></td>
                 <td id="total-2"></td>
@@ -307,7 +307,7 @@
                 <td id="total-5" class="col-5"></td>
             </tr>
             <tr>
-                <td></td>
+                <!-- <td></td> -->
                 <td></td>
                 <td id="percent-1"></td>
                 <td id="percent-2"></td>
@@ -325,7 +325,7 @@
             PAN: Symbol('pan'),
             TBD: Symbol('TBD'),
             SELECT: Symbol('select'),
-            DESELECT: Symbol('deselect'),
+            // DESELECT: Symbol('deselect'),
         });
 
         const districtColor = {
@@ -400,7 +400,7 @@
                 this.dragToSelectButton = L.DomUtil.create('a', 'select-button', container);
                 this.dragToSelectButton.href = '#';
                 this.dragToSelectButton.title = 'Drag to Select';
-                this.dragToSelectButton.innerHTML = '&#9998;'; // Pen symbol
+                this.dragToSelectButton.innerHTML = '&#8605;'; // Rightwards arrow with wavy stroke
 
                 L.DomEvent.on(this.dragToPanButton, 'click dblclick', this._clickDragToPan, this);
                 L.DomEvent.on(this.dragToSelectButton, 'click dblclick', this._clickDragToSelect, this);
@@ -508,10 +508,11 @@
             },
 
             removeADistrict: function () {
+                // mikey TODO dump dists down
                 if (numDistricts > 2) {
                     blocksLayer.eachLayer(function (layer) {
                         if (layer.feature.properties.district === numDistricts) {
-                            layer.feature.properties.district = null;
+                            layer.feature.properties.district = numDistricts - 1;
                         }
                     })
                     this.districtButtons[numDistricts].classList.add('hidden');
@@ -530,63 +531,63 @@
         var districtSelector = new L.Control.DistrictSelector();
         map.addControl(districtSelector);
 
-        L.Control.Save = L.Control.extend({
-            options: {
-                position: 'topright'
-            },
+        // L.Control.Save = L.Control.extend({
+        //     options: {
+        //         position: 'topright'
+        //     },
 
-            onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
+        //     onAdd: function (map) {
+        //         var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
 
-                this.saveButton = L.DomUtil.create('a', '', container);
-                this.saveButton.href = '#';
-                this.saveButton.title = 'Save';
-                this.saveButton.textContent = 'Save';
+        //         this.saveButton = L.DomUtil.create('a', '', container);
+        //         this.saveButton.href = '#';
+        //         this.saveButton.title = 'Save';
+        //         this.saveButton.textContent = 'Save';
 
-                L.DomEvent.on(this.saveButton, 'dblclick', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-                L.DomEvent.on(this.saveButton, 'click', () => {
-                    console.log('save');
-                    saveAsJSON();
-                });
+        //         L.DomEvent.on(this.saveButton, 'dblclick', (e) => {
+        //             e.preventDefault();
+        //             e.stopPropagation();
+        //         });
+        //         L.DomEvent.on(this.saveButton, 'click', () => {
+        //             console.log('save');
+        //             saveAsJSON();
+        //         });
 
-                return container;
-            },
-        });
+        //         return container;
+        //     },
+        // });
 
-        var save = new L.Control.Save();
-        map.addControl(save);
+        // var save = new L.Control.Save();
+        // map.addControl(save);
 
-        L.Control.Load = L.Control.extend({
-            options: {
-                position: 'topright'
-            },
+        // L.Control.Load = L.Control.extend({
+        //     options: {
+        //         position: 'topright'
+        //     },
 
-            onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
+        //     onAdd: function (map) {
+        //         var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
 
-                this.loadButton = L.DomUtil.create('a', '', container);
-                this.loadButton.href = '#';
-                this.loadButton.title = 'Load';
-                this.loadButton.textContent = 'Load';
+        //         this.loadButton = L.DomUtil.create('a', '', container);
+        //         this.loadButton.href = '#';
+        //         this.loadButton.title = 'Load';
+        //         this.loadButton.textContent = 'Load';
 
-                L.DomEvent.on(this.loadButton, 'dblclick', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-                L.DomEvent.on(this.loadButton, 'click', () => {
-                    console.log('load');
-                    loadFile();
-                });
+        //         L.DomEvent.on(this.loadButton, 'dblclick', (e) => {
+        //             e.preventDefault();
+        //             e.stopPropagation();
+        //         });
+        //         L.DomEvent.on(this.loadButton, 'click', () => {
+        //             console.log('load');
+        //             loadFile();
+        //         });
 
-                return container;
-            },
-        });
+        //         return container;
+        //     },
+        // });
 
-        var load = new L.Control.Load();
-        map.addControl(load);
+        // var load = new L.Control.Load();
+        // map.addControl(load);
 
         L.Control.Share = L.Control.extend({
             options: {
@@ -637,6 +638,50 @@
         var share = new L.Control.Share();
         map.addControl(share);
 
+        L.Control.HelpButton = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
+
+                this.helpButton = L.DomUtil.create('a', '', container);
+                this.helpButton.href = '#';
+                this.helpButton.title = 'Help';
+                this.helpButton.textContent = '?';
+
+                L.DomEvent.on(this.helpButton, 'click', function (e) {
+                    L.DomEvent.stopPropagation(e);
+                    L.DomEvent.preventDefault(e);
+
+                    var htmlContent = `
+                        <div class="help-popup">
+                            <h3>Districting Help</h3>
+                            <ul>
+                                <li>This is a basic but working district builder. Contact Liberty resident <a href="mailto:kraig@hbhome.org">kraig@hbhome.org</a> if you have any questions.</li>
+                                <li>In the top right, you can change the district you are "painting" by clicking on 1, 2, etc.</li>
+                                <li>Click the plus or minus to increase or decrease the number of districts.</li>
+                                <li>The only way to "save" is to copy the link to your clipboard. Then you can email it, save it in a document, etc.</li>
+                                <li>You can toggle between "pan the map" and "drag to select multiple districts" using the hand and squiggle in the top right.</li>
+                            </ul>
+                        </div>
+                    `;
+
+                    L.popup()
+                        .setLatLng(map.getCenter())
+                        .setContent(htmlContent)
+                        .openOn(map);
+                }, this);
+
+                return container;
+            }
+        });
+
+
+        var helpButton = new L.Control.HelpButton();
+        map.addControl(helpButton);
+
         // fetch('bound-from-qgis.geojson')
         fetch('boundary_07_30_24.geojson')
             .then(response => response.json())
@@ -677,7 +722,10 @@
                 // oids = [1940, 5884, 7037, 7038, 8159, 8222, 9325, 12623, 20217, 22563, 26912, 31566, 35805, 51442, 59164]
                 // data.features = data.features.filter(feature => oids.includes(feature.properties.OBJECTID));
 
-                data.features.forEach(f => grandTotal += f.properties.PP_TOTAL);
+                data.features.forEach(f => {
+                    grandTotal += f.properties.PP_TOTAL;
+                    f.properties.district = 1;
+                });
 
                 window.ddd = data;
                 blocksLayer = L.geoJSON(data, {
@@ -756,8 +804,8 @@
                 }).addTo(map);
             })
             .then(() => {
+                processDistData('1pu,zT,1c,72,11,hN,hK,18r,8G,1sv,19O,Ap,22,20u,mz,k5,11N,nP,Uh,JD,hP,i2,oC,k,9w,1j,Ry,1Oh|4p,a,1kO,2j3,GA,iF,SS,sp,6P,Qj,Sp,zY,1Y,1kq,lK,1Kh,SD,A8,f2,i6,Nx,md,hC,UD,JM,iS,RB|fN,1h7,sr,1an,nn,Si,A7,gB,BW,Q1,bz,Su,6p,Tw,j,99,1f6,bT,93,2,xU,KZ,1Ob,2v,96,rj,2JO,1O,ps,hm|vi,11l,4,iO,iW,hg,K4,M,74,8S,YO,1sC,9g,ry,a0,Zt,iO,zf,19A,9m,1,19J,1R8,xb,Ue,2j8,wM,Vl|mS,AY,hw,Aa,iW,Kl,XM,20P,x,ii,iv,1a8,Ai,11q,oM,xa,bY,q6,Ae,So,18y,qs,oF,CG,h1,bj,6r,221');
                 processDistDataFromUrl();
-                updateCounts();
             })
             .catch(error => console.error('Error loading GeoJSON:', error));
 
@@ -795,14 +843,14 @@
             if (dragState === DragStates.SELECT) {
                 selectBlock(leafletFeature);
             } else {
-                deselectBlock(leafletFeature);
+                // deselectBlock(leafletFeature);
             }
         }
 
         function toggleBlock(leafletFeature) {
             if (cldebug) console.log('toggle block');
             if (leafletFeature.feature.properties.district === activeDistrict) {
-                deselectBlock(leafletFeature);
+                // deselectBlock(leafletFeature);
             } else {
                 selectBlock(leafletFeature);
             }
@@ -814,6 +862,7 @@
         function updateCursorFromBlock(leafletBlock) {
             if (cldebug) console.log('updating cursor from block');
             if (isDragging) return;
+            return;
             if (leafletBlock.feature.properties.district === activeDistrict) {
                 if (cldebug) console.log('updating cursor from block -- switching to minus');
                 map.getContainer().classList.add('cursor-minus');
@@ -830,13 +879,14 @@
             }
             if (!isDragging) {
                 if (cldebug) console.log('determining drag state from block -- not dragging');
-                if (leafletBlock.feature.properties.district === activeDistrict) {
-                    if (cldebug) console.log('determining drag state from block -- switching to deselect');
-                    dragState = DragStates.DESELECT;
-                } else {
-                    if (cldebug) console.log('determining drag state from block -- switching to select');
-                    dragState = DragStates.SELECT;
-                }
+                dragState = DragStates.SELECT;
+                // if (leafletBlock.feature.properties.district === activeDistrict) {
+                //     if (cldebug) console.log('determining drag state from block -- switching to deselect');
+                //     dragState = DragStates.DESELECT;
+                // } else {
+                //     if (cldebug) console.log('determining drag state from block -- switching to select');
+                //     dragState = DragStates.SELECT;
+                // }
             }
         }
 
@@ -926,15 +976,17 @@
                 leafletFeature = getLeafletFeature(e);
                 if (leafletFeature) {
                     if (cldebug) console.log('mousemove -- found TBD, then feature');
-                    if (leafletFeature.properties.district === activeDistrict) {
-                        if (cldebug) console.log('mousemove -- found TBD, then feature, then district match');
-                        dragState = DragStates.DESELECT;
-                        document.querySelector('#map').classList.add('cursor-minus');
-                    } else {
-                        if (cldebug) console.log('mousemove -- found TBD, then feature, then district MISmatch');
-                        dragState = DragStates.SELECT;
-                        document.querySelector('#map').classList.add('cursor-plus');
-                    }
+                    dragState = DragStates.SELECT;
+                    document.querySelector('#map').classList.add('cursor-plus');
+                    // if (leafletFeature.properties.district === activeDistrict) {
+                    //     if (cldebug) console.log('mousemove -- found TBD, then feature, then district match');
+                    //     dragState = DragStates.DESELECT;
+                    //     document.querySelector('#map').classList.add('cursor-minus');
+                    // } else {
+                    //     if (cldebug) console.log('mousemove -- found TBD, then feature, then district MISmatch');
+                    //     dragState = DragStates.SELECT;
+                    //     document.querySelector('#map').classList.add('cursor-plus');
+                    // }
                 } else {
                     if (cldebug) console.log('mousemove -- found TBD, then no feature');
                     dragState = DragStates.SELECT;
@@ -959,6 +1011,7 @@
         }
 
         function toggleDragState() {
+            return;
             if (dragState === DragStates.SELECT) {
                 dragState = DragStates.DESELECT;
             } else if (dragState === DragStates.DESELECT) {
@@ -986,7 +1039,7 @@
 
             districtTarget = Math.round(grandTotal / numDistricts)
             document.querySelector('#district-target').textContent = districtTarget.toLocaleString();
-            document.querySelector('#total-undistricted').textContent = (grandTotal - selectedTotal).toLocaleString();
+            // document.querySelector('#total-undistricted').textContent = (grandTotal - selectedTotal).toLocaleString();
 
             for (let i = 1; i <= 5; i++) {
                 document.querySelector(`#total-${i}`).textContent = counts[i];
@@ -1164,6 +1217,12 @@
             const url = new URL(window.location.href);
             const params = new URLSearchParams(url.search);
             const distDataParam = params.get('distData');
+            processDistData(distDataParam);
+            params.delete('distData');
+            window.history.pushState({}, '', `${url.pathname}?${params}`);
+        }
+
+        function processDistData(distDataParam) {
             if (!distDataParam) {
                 return;
             }
@@ -1190,9 +1249,6 @@
                     });
                 }
             });
-
-            params.delete('distData');
-            window.history.pushState({}, '', `${url.pathname}?${params}`);
 
             updateCounts();
 
