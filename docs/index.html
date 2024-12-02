@@ -270,8 +270,7 @@
         <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
         <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
         <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
-        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
-                value="100"></label>
+        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100" value="100"></label>
     </div>
     </div>
     <p id="totals">
@@ -508,11 +507,13 @@
             },
 
             removeADistrict: function () {
-                // mikey TODO dump dists down
                 if (numDistricts > 2) {
                     blocksLayer.eachLayer(function (layer) {
                         if (layer.feature.properties.district === numDistricts) {
                             layer.feature.properties.district = numDistricts - 1;
+                            layer.setStyle({
+                                fillColor: getColor(layer.feature),
+                            });
                         }
                     })
                     this.districtButtons[numDistricts].classList.add('hidden');
@@ -704,7 +705,7 @@
             .catch(error => console.error('Error loading GeoJSON:', error));
 
         blockStyleUnhighlighted = {
-            fillOpacity: 0.3,
+            fillOpacity: 0.5,
             color: 'white',
             opacity: 0.3,
             weight: 1,
