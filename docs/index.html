@@ -21,7 +21,7 @@
             --btn-hover-color: #228b22;
             --district-color-1: orange;
             --district-color-2: green;
-            --district-color-3: indigo;
+            --district-color-3: red;
             --district-color-4: violet;
             --district-color-5: blue;
         }
@@ -270,7 +270,8 @@
         <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
         <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
         <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
-        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100" value="100"></label>
+        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
+                value="100"></label>
     </div>
     </div>
     <p id="totals">
@@ -330,7 +331,7 @@
         const districtColor = {
             1: 'orange',
             2: 'green',
-            3: 'indigo',
+            3: 'red',
             4: 'violet',
             5: 'blue',
         }
@@ -683,27 +684,6 @@
         var helpButton = new L.Control.HelpButton();
         map.addControl(helpButton);
 
-        // fetch('bound-from-qgis.geojson')
-        fetch('boundary_07_30_24.geojson')
-            .then(response => response.json())
-            .then(data => {
-                boundaryLayer = L.geoJSON(data, {
-                    style: function (feature) {
-                        return {
-                            color: 'black',
-                            weight: 3,
-                            fillOpacity: 0,
-                            dashArray: '4,4',
-                        };
-                    },
-                })
-
-                if (document.getElementById('boundary-toggle').checked) {
-                    map.addLayer(boundaryLayer);
-                }
-            })
-            .catch(error => console.error('Error loading GeoJSON:', error));
-
         blockStyleUnhighlighted = {
             fillOpacity: 0.5,
             color: 'white',
@@ -807,6 +787,26 @@
             .then(() => {
                 processDistData('1pu,zT,1c,72,11,hN,hK,18r,8G,1sv,19O,Ap,22,20u,mz,k5,11N,nP,Uh,JD,hP,i2,oC,k,9w,1j,Ry,1Oh|4p,a,1kO,2j3,GA,iF,SS,sp,6P,Qj,Sp,zY,1Y,1kq,lK,1Kh,SD,A8,f2,i6,Nx,md,hC,UD,JM,iS,RB|fN,1h7,sr,1an,nn,Si,A7,gB,BW,Q1,bz,Su,6p,Tw,j,99,1f6,bT,93,2,xU,KZ,1Ob,2v,96,rj,2JO,1O,ps,hm|vi,11l,4,iO,iW,hg,K4,M,74,8S,YO,1sC,9g,ry,a0,Zt,iO,zf,19A,9m,1,19J,1R8,xb,Ue,2j8,wM,Vl|mS,AY,hw,Aa,iW,Kl,XM,20P,x,ii,iv,1a8,Ai,11q,oM,xa,bY,q6,Ae,So,18y,qs,oF,CG,h1,bj,6r,221');
                 processDistDataFromUrl();
+                // fetch('bound-from-qgis.geojson')
+                fetch('boundary_07_30_24.geojson')
+                    .then(response => response.json())
+                    .then(data => {
+                        boundaryLayer = L.geoJSON(data, {
+                            style: function (feature) {
+                                return {
+                                    color: 'black',
+                                    weight: 3,
+                                    fillOpacity: 0,
+                                    dashArray: '4,4',
+                                };
+                            },
+                        })
+
+                        if (document.getElementById('boundary-toggle').checked) {
+                            map.addLayer(boundaryLayer);
+                        }
+                    })
+                    .catch(error => console.error('Error loading GeoJSON:', error));
             })
             .catch(error => console.error('Error loading GeoJSON:', error));
 
