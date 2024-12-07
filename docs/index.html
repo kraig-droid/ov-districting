@@ -1125,7 +1125,13 @@
                             fillOpacity: 0
                         };
                     }
-                }).addTo(map);
+                });
+                if (document.getElementById('district-boundary-toggle').checked) {
+                    map.addLayer(districtBoundaryLayer);
+                };
+                if (blocksLayer) {
+                    blocksLayer.bringToFront();
+                }
             }
         }
 
