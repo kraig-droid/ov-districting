@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script>
-    <script src="leaflet.mask.js"></script>
+    <!-- <script src="leaflet.mask.js"></script> -->
     <!-- <script src="//unpkg.com/alpinejs"></script> -->
     <style>
         :root {
@@ -371,7 +371,6 @@
 
         const map = L.map('map').setView([41.3, -111.7], 11);
         const svg = L.svg().addTo(map);
-        console.log("SVG added to map:", svg);
 
         hideExtraColumns();
 
@@ -818,30 +817,30 @@
                         }
 
                         // New code here
-                        function lineToPolygon(data) {
-                            let coordinates = data.features[0].geometry.coordinates;
-                            if (data.features[0].geometry.type === 'LineString') {
-                                coordinates = [coordinates];
-                            }
-                            return {
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'Polygon',
-                                    coordinates: coordinates
-                                }
-                            };
-                        }
-                        // Convert line to polygon
-                        let polygonData = lineToPolygon(data);
+                        // function lineToPolygon(data) {
+                        //     let coordinates = data.features[0].geometry.coordinates;
+                        //     if (data.features[0].geometry.type === 'LineString') {
+                        //         coordinates = [coordinates];
+                        //     }
+                        //     return {
+                        //         type: 'Feature',
+                        //         geometry: {
+                        //             type: 'Polygon',
+                        //             coordinates: coordinates
+                        //         }
+                        //     };
+                        // }
+                        // // Convert line to polygon
+                        // let polygonData = lineToPolygon(data);
 
-                        console.log(map);
-                        maskLayer = L.mask(polygonData, {
-                            fillOpacity: 0.9,
-                            fillColor: '#ff0000',
-                            interactive: false
-                        });
+                        // console.log(map);
+                        // maskLayer = L.mask(polygonData, {
+                        //     fillOpacity: 0.9,
+                        //     fillColor: '#ff0000',
+                        //     interactive: false
+                        // });
 
-                        maskLayer.addTo(map);
+                        // maskLayer.addTo(map);
                     })
                     .catch(error => console.error('Error loading GeoJSON:', error));
             })
