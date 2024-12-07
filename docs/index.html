@@ -9,8 +9,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-    <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script>
+    <script src="leaflet.mask.js"></script>
     <!-- <script src="//unpkg.com/alpinejs"></script> -->
     <style>
         :root {
@@ -269,6 +270,7 @@
     <div id="below-map">
         <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
         <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
+        <label><input type="checkbox" id="district-boundary-toggle" checked>Show District Boundaries</label>
         <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
         <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
                 value="100"></label>
@@ -360,11 +362,16 @@
         let activeDistrict = 1;
         const maxNumDistricts = 5;
         // let blocksLayer = null;
-        var blocksLayer = null;
+        let blocksLayer = null;
         let boundaryLayer = null;
+        let districtBoundaryLayer = null;
         let leafletFeatureToIgnoreClickBecauseMousedownHandledIt = null;
         let grandTotal = 0;
         let districtTarget = undefined;
+
+        const map = L.map('map').setView([41.3, -111.7], 11);
+        const svg = L.svg().addTo(map);
+        console.log("SVG added to map:", svg);
 
         hideExtraColumns();
 
@@ -378,10 +385,14 @@
 
         const totalDisplay = document.getElementById('totalDisplay');
 
-        const map = L.map('map').setView([41.3, -111.7], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            className: 'dimmed-map',
+        // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //     attribution: '© OpenStreetMap contributors',
+        //     className: 'dimmed-map',
+        // }).addTo(map);
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+            id: 'mapbox/streets-v11', // You can change this to other styles
+            accessToken: 'pk.eyJ1Ijoia3JhaWdhdGhiaG9tZSIsImEiOiJjbTRjNzVkcTEwNTdpMmlweWNhZzhjODR5In0.aKTTGmrf_m5gAkP0qfuRtg'
         }).addTo(map);
 
         L.Control.ModeSwitch = L.Control.extend({
@@ -696,7 +707,7 @@
         }
 
         // fetch blocks
-        fetch('candidate-blocks-3.geojson')
+        fetch('candidate-blocks-3_trimmed.geojson')
             .then(response => response.json())
             .then(data => {
                 data.features = data.features.filter(feature => feature.properties.PP_TOTAL !== 0);
@@ -788,16 +799,16 @@
                 processDistData('1pu,zT,1c,72,11,hN,hK,18r,8G,1sv,19O,Ap,22,20u,mz,k5,11N,nP,Uh,JD,hP,i2,oC,k,9w,1j,Ry,1Oh|4p,a,1kO,2j3,GA,iF,SS,sp,6P,Qj,Sp,zY,1Y,1kq,lK,1Kh,SD,A8,f2,i6,Nx,md,hC,UD,JM,iS,RB|fN,1h7,sr,1an,nn,Si,A7,gB,BW,Q1,bz,Su,6p,Tw,j,99,1f6,bT,93,2,xU,KZ,1Ob,2v,96,rj,2JO,1O,ps,hm|vi,11l,4,iO,iW,hg,K4,M,74,8S,YO,1sC,9g,ry,a0,Zt,iO,zf,19A,9m,1,19J,1R8,xb,Ue,2j8,wM,Vl|mS,AY,hw,Aa,iW,Kl,XM,20P,x,ii,iv,1a8,Ai,11q,oM,xa,bY,q6,Ae,So,18y,qs,oF,CG,h1,bj,6r,221');
                 processDistDataFromUrl();
                 // fetch('bound-from-qgis.geojson')
-                fetch('boundary_07_30_24.geojson')
+                fetch('boundary_07_30_24_without_gaps.geojson')
                     .then(response => response.json())
                     .then(data => {
                         boundaryLayer = L.geoJSON(data, {
                             style: function (feature) {
                                 return {
                                     color: 'black',
-                                    weight: 3,
+                                    weight: 1.5,
                                     fillOpacity: 0,
-                                    dashArray: '4,4',
+                                    dashArray: '2,3',
                                 };
                             },
                         })
@@ -805,6 +816,32 @@
                         if (document.getElementById('boundary-toggle').checked) {
                             map.addLayer(boundaryLayer);
                         }
+
+                        // New code here
+                        function lineToPolygon(data) {
+                            let coordinates = data.features[0].geometry.coordinates;
+                            if (data.features[0].geometry.type === 'LineString') {
+                                coordinates = [coordinates];
+                            }
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Polygon',
+                                    coordinates: coordinates
+                                }
+                            };
+                        }
+                        // Convert line to polygon
+                        let polygonData = lineToPolygon(data);
+
+                        console.log(map);
+                        maskLayer = L.mask(polygonData, {
+                            fillOpacity: 0.9,
+                            fillColor: '#ff0000',
+                            interactive: false
+                        });
+
+                        maskLayer.addTo(map);
                     })
                     .catch(error => console.error('Error loading GeoJSON:', error));
             })
@@ -1029,25 +1066,69 @@
                 5: 0,
             }
             let selectedTotal = 0;
+            const districtPolygons = {};
+
             if (blocksLayer) {
                 blocksLayer.eachLayer(function (layer) {
-                    if (layer.feature.properties.district) {
+                    const district = layer.feature.properties.district;
+                    if (district) {
                         selectedTotal += layer.feature.properties.PP_TOTAL;
+                        counts[district] += layer.feature.properties.PP_TOTAL;
+
+                        // Collect all block geometries for each district
+                        if (!districtPolygons[district]) {
+                            districtPolygons[district] = [];
+                        }
+                        districtPolygons[district].push(layer.feature.geometry);
                     }
-                    counts[layer.feature.properties.district] += layer.feature.properties.PP_TOTAL;
                 });
+            }
+
+            // Dissolve the blocks for each district into a single polygon
+            for (let district in districtPolygons) {
+                const featureCollection = turf.featureCollection(
+                    districtPolygons[district].map(geometry => turf.feature(geometry))
+                );
+                // Use union instead of dissolve
+                districtPolygons[district] = featureCollection.features.reduce((acc, cur) => {
+                    return acc ? turf.union(acc, cur) : cur;
+                }, null);
             }
 
             districtTarget = Math.round(grandTotal / numDistricts)
             document.querySelector('#district-target').textContent = districtTarget.toLocaleString();
-            // document.querySelector('#total-undistricted').textContent = (grandTotal - selectedTotal).toLocaleString();
 
             for (let i = 1; i <= 5; i++) {
                 document.querySelector(`#total-${i}`).textContent = counts[i];
                 document.querySelector(`#percent-${i}`).textContent = `${Math.round(counts[i] / districtTarget * 100)} %`;
             }
 
-        };
+            if (map) {
+                // Remove existing district boundary layer if it exists
+                if (districtBoundaryLayer) {
+                    map.removeLayer(districtBoundaryLayer);
+                }
+
+                // Create a new GeoJSON FeatureCollection from the district polygons
+                const districtFeatures = Object.entries(districtPolygons).map(([district, geometry]) => ({
+                    type: "Feature",
+                    properties: { district: parseInt(district) },
+                    geometry: geometry.geometry // Note: geometry is a Feature, so we need to access its geometry
+                }));
+
+                // Create a new layer with the district boundaries
+                districtBoundaryLayer = L.geoJSON(districtFeatures, {
+                    style: function (feature) {
+                        return {
+                            color: getColor({ properties: { district: feature.properties.district } }),
+                            weight: 5,
+                            opacity: 1,
+                            fillOpacity: 0
+                        };
+                    }
+                }).addTo(map);
+            }
+        }
 
         function hideExtraColumns() {
             for (let i = 3; i <= 5; i++) {
@@ -1175,6 +1256,18 @@
             }
         });
 
+        document.getElementById('district-boundary-toggle').addEventListener('change', function () {
+            if (this.checked) {
+                if (districtBoundaryLayer) {
+                    map.addLayer(districtBoundaryLayer);
+                }
+            } else {
+                if (districtBoundaryLayer) {
+                    map.removeLayer(districtBoundaryLayer);
+                }
+            }
+        });
+
         function toBase62(num) {
             if (num === 0) return BASE62[0];
             let result = '';
@@ -1266,9 +1359,9 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const brightnessSlider = document.getElementById('map-brightness-slider');
-            const map = document.querySelector('.dimmed-map');
+            const mapEl = document.querySelector('#map');
 
-            const mapStyle = window.getComputedStyle(map);
+            const mapStyle = window.getComputedStyle(mapEl);
 
             const filterValue = mapStyle.getPropertyValue('filter');
             const brightnessMatch = filterValue.match(/brightness\(([+-]?\d*\.?\d+)\)/);
@@ -1280,7 +1373,7 @@
 
             brightnessSlider.addEventListener('input', function () {
                 const brightness = this.value / 100;
-                map.style.filter = `brightness(${brightness})`;
+                mapEl.style.filter = `brightness(${brightness})`;
             });
         });
 
