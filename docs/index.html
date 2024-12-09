@@ -10,8 +10,6 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <!-- <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script> -->
-    <!-- <script src="//unpkg.com/alpinejs"></script> -->
     <style>
         :root {
             --btn-active-color: #556b2f;
@@ -257,10 +255,6 @@
         <div id="map" style="flex-grow: 1;"></div>
         <div id="map-overlay"
             style="position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%); display: none;">
-
-            <!-- mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>'); -->
-
-            <!-- -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>'); mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>');  -->
         </div>
     </div>
     <div id="below-map" style="flex-shrink: 0;">
@@ -288,11 +282,11 @@
                     <tr>
                         <!-- <th scope="col">Not In a District</th> -->
                         <th scope="col">District Target</th>
-                        <th scope="col">1</th>
-                        <th scope="col">2</th>
-                        <th scope="col" class="col-3">3</th>
-                        <th scope="col" class="col-4">4</th>
-                        <th scope="col" class="col-5">5</th>
+                        <th scope="col">South Fork</th>
+                        <th scope="col">Mid Fork</th>
+                        <th scope="col" class="col-3">Eden</th>
+                        <th scope="col" class="col-4">Liberty</th>
+                        <th scope="col" class="col-5">Wolf Creek</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -372,14 +366,6 @@
         const svg = L.svg().addTo(map);
 
         hideExtraColumns();
-
-        // function updateDebug() {
-        //     for (v of ['dragState', 'isDragging', 'selectedTotal', 'numDistricts', 'activeDistrict']) {
-        //         document.querySelector(`#${v}-el`).textContent = `${v}: ${String(eval(v))}`;
-        //     }
-        // };
-        // document.addEventListener('click', e => updateDebug());
-        // setInterval(() => updateDebug(), 250);
 
         const totalDisplay = document.getElementById('totalDisplay');
 
@@ -542,64 +528,6 @@
         var districtSelector = new L.Control.DistrictSelector();
         map.addControl(districtSelector);
 
-        // L.Control.Save = L.Control.extend({
-        //     options: {
-        //         position: 'topright'
-        //     },
-
-        //     onAdd: function (map) {
-        //         var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
-
-        //         this.saveButton = L.DomUtil.create('a', '', container);
-        //         this.saveButton.href = '#';
-        //         this.saveButton.title = 'Save';
-        //         this.saveButton.textContent = 'Save';
-
-        //         L.DomEvent.on(this.saveButton, 'dblclick', (e) => {
-        //             e.preventDefault();
-        //             e.stopPropagation();
-        //         });
-        //         L.DomEvent.on(this.saveButton, 'click', () => {
-        //             console.log('save');
-        //             saveAsJSON();
-        //         });
-
-        //         return container;
-        //     },
-        // });
-
-        // var save = new L.Control.Save();
-        // map.addControl(save);
-
-        // L.Control.Load = L.Control.extend({
-        //     options: {
-        //         position: 'topright'
-        //     },
-
-        //     onAdd: function (map) {
-        //         var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control word-buttons');
-
-        //         this.loadButton = L.DomUtil.create('a', '', container);
-        //         this.loadButton.href = '#';
-        //         this.loadButton.title = 'Load';
-        //         this.loadButton.textContent = 'Load';
-
-        //         L.DomEvent.on(this.loadButton, 'dblclick', (e) => {
-        //             e.preventDefault();
-        //             e.stopPropagation();
-        //         });
-        //         L.DomEvent.on(this.loadButton, 'click', () => {
-        //             console.log('load');
-        //             loadFile();
-        //         });
-
-        //         return container;
-        //     },
-        // });
-
-        // var load = new L.Control.Load();
-        // map.addControl(load);
-
         L.Control.Share = L.Control.extend({
             options: {
                 position: 'topright'
@@ -632,14 +560,6 @@
                     const safeData = arrays.map((x) => x.join(',')).join('|');
                     const url = `https://districting.hbhome.org/?distData=${safeData}`;
                     navigator.clipboard.writeText(url);
-                    // const r = processDistDataFromUrl(url);
-                    // const r2 = Object.entries(r).reduce(
-                    //     (arrays, [k, v]) => {
-                    //         arrays[v - 1].push(k);
-                    //         return arrays;
-                    //     },
-                    //     [[], [], [], [], []]
-                    // );
                 });
 
                 return container;
@@ -730,15 +650,6 @@
                         };
                     },
                     onEachFeature: function (feature, layer) {
-                        if (feature.properties) {
-                            // const center = layer.getBounds().getCenter();
-                            // const label = L.divIcon({
-                            //     className: 'label',
-                            //     html: `<div>${feature.properties.PP_TOTAL}</div>`,
-                            //     iconSize: [40, 20]
-                            // });
-                            // L.marker(center, { icon: label, interactive: false }).addTo(map);
-                        }
 
                         layer.on('click', function (e) {
                             if (cldebug) console.log('layer on (block) clicked', this.feature.properties.OBJECTID);
@@ -841,87 +752,6 @@
                                 boundaryLatLongs.push(layer.getLatLngs()); // Push LatLngs of each polygon/polyline
                             }
                         });
-
-
-                        // points = "0,0 100,0, 100,100";
-                        // points = "0,100 100,100, 100,99 0,99";
-                        // points = "0,0 100,0, 100,1 0,1";
-                        // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${points}" fill="%23000000"/></svg>')`;
-
-
-
-                        // function convertGeoJSONtoSVGPoints(coordinates, bounds) {
-                        //     // Get the bounds of your data
-                        //     const minLng = bounds.getWest();  // -117
-                        //     const maxLng = bounds.getEast();  // -116
-                        //     const minLat = bounds.getSouth();
-                        //     const maxLat = bounds.getNorth();
-
-                        //     // Convert each coordinate to percentage (0-100 range)
-                        //     // Note the inverted y-coordinate calculation (100 - y)
-                        //     const points = data.features[0].geometry.coordinates.map(coord => {
-                        //         const x = (((coord[0] - minLng) / (maxLng - minLng)) * 100).toFixed(2);
-                        //         const y = (100 - ((coord[1] - minLat) / (maxLat - minLat)) * 100).toFixed(2);
-                        //         return `${x},${y}`;
-                        //     });
-
-                        //     return points.join(' ');
-                        // }
-
-                        // let points = convertGeoJSONtoSVGPoints(data.features[0].geometry.coordinates, map.getBounds());
-
-                        // const bounds = map.getBounds();
-                        // console.log(bounds.getWest().toFixed(6), bounds.getEast().toFixed(6), bounds.getSouth().toFixed(6), bounds.getNorth().toFixed(6));
-                        // const minLng = bounds.getWest();  // -117
-                        // const maxLng = bounds.getEast();  // -116
-                        // const minLat = bounds.getSouth();
-                        // const maxLat = bounds.getNorth();
-                        // const x = data.features[0].geometry.coordinates[0][0];
-                        // console.log(`${x.toFixed(6)}, ${((x - minLng) * 100).toFixed(4)}`);
-
-
-                        // // points = "0,0 100,0, 100,100";
-                        // // points = "0,100 100,100, 100,99 0,99";
-                        // // points = "0,0 100,0, 100,1 0,1";
-                        // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${points}" fill="%23000000"/></svg>')`;
-
-
-                        // // Get the map container dimensions
-                        // const mapWidth = map.getContainer().offsetWidth;
-                        // const mapHeight = map.getContainer().offsetHeight;
-                        // const aspectRatio = mapWidth / mapHeight;
-
-                        // Update the SVG viewBox to match the aspect ratio
-                        //                     document.querySelector('#map-overlay').style.maskImage =
-                        //                         `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" 
-                        // width="100" height="100" viewBox="0 0 100 100" 
-                        // preserveAspectRatio="none">
-                        // <polygon points="${points}" fill="%23000000"/></svg>')`;
-                        // // make a new polygon of the displayed map bounds
-                        // let bounds = map.getBounds();
-                        // const expansionConst = 0.2;
-                        // let boundsPolygon = {
-                        //     type: 'Feature',
-                        //     geometry: {
-                        //         type: 'Polygon',
-                        //         coordinates: [
-                        //             [
-                        //                 [bounds.getWest() - expansionConst, bounds.getSouth() - expansionConst],
-                        //                 [bounds.getEast() + expansionConst, bounds.getSouth() - expansionConst],
-                        //                 [bounds.getEast() + expansionConst, bounds.getNorth() + expansionConst],
-                        //                 [bounds.getWest() - expansionConst, bounds.getNorth() + expansionConst],
-                        //                 [bounds.getWest() - expansionConst, bounds.getSouth() - expansionConst],
-                        //             ]
-                        //         ]
-                        //     }
-                        // };
-
-
-                        // mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>');
-
-
-                        // subtract insidePolygon from boundsPolygon and display that polygon
-                        // let outsideBoundsPolygon = turf.difference(boundsPolygon, insidePolygon);
                     })
                     .catch(error => console.error('Error loading GeoJSON:', error));
             })
@@ -1075,18 +905,6 @@
             if (cldebug) console.log('mousemove -- dragState is', dragState);
             if (dragState === DragStates.PAN) return;
 
-
-            // I thought there might be other layers not blocks interfering
-            // const targetLayer = leafletPip.pointInLayer(e.latlng, blocksLayer);
-            // if (targetLayer.length) {
-            //     for (const leafletFeature of targetLayer) {
-            //         if (!leafletFeature.feature.properties.PP_TOTAL) {
-
-            //             if (cldebug) console.log(leafletFeature.feature.properties);;
-            //         }
-            //     }
-            // }
-
             let leafletFeature = undefined;
 
             if (dragState === DragStates.TBD) {
@@ -1096,15 +914,6 @@
                     if (cldebug) console.log('mousemove -- found TBD, then feature');
                     dragState = DragStates.SELECT;
                     document.querySelector('#map').classList.add('cursor-plus');
-                    // if (leafletFeature.properties.district === activeDistrict) {
-                    //     if (cldebug) console.log('mousemove -- found TBD, then feature, then district match');
-                    //     dragState = DragStates.DESELECT;
-                    //     document.querySelector('#map').classList.add('cursor-minus');
-                    // } else {
-                    //     if (cldebug) console.log('mousemove -- found TBD, then feature, then district MISmatch');
-                    //     dragState = DragStates.SELECT;
-                    //     document.querySelector('#map').classList.add('cursor-plus');
-                    // }
                 } else {
                     if (cldebug) console.log('mousemove -- found TBD, then no feature');
                     dragState = DragStates.SELECT;
@@ -1334,34 +1143,29 @@
             const el = document.querySelector('#map-overlay');
             if (this.checked) {
                 const points = boundaryLatLongs[0].map(latlng => {
-                    const point = map.latLngToContainerPoint(latlng); // Convert to pixel coordinates
-                    return `${point.x},${point.y}`; // Format as x,y for SVG
+                    const point = map.latLngToContainerPoint(latlng);
+                    return `${point.x},${point.y}`;
                 }).join(" ");
 
 
-                // Construct an inline SVG string
-                //                         const svgString = `
-                // <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
-                //     <polygon points="${points}" />
-                // </svg>`;
                 const svgString = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
-    <defs>
-        <mask id="hole-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <polygon points="${points}" />
-        </mask>
-    </defs>
-    <rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#hole-mask)" />
-</svg>`;
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
+                        <defs>
+                            <mask id="hole-mask">
+                                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                                <polygon points="${points}" />
+                            </mask>
+                        </defs>
+                        <rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#hole-mask)" />
+                    </svg>`;
 
-                // Apply as mask-image to a div
                 document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
 
                 el.style.display = 'block';
             } else {
                 el.style.display = 'none';
             }
+            updateLabels();
         });
 
         document.getElementById('boundary-toggle').addEventListener('change', function () {
@@ -1512,6 +1316,9 @@
         let labelGroup = L.layerGroup().addTo(map);
         function updateLabels() {
             labelGroup.clearLayers();
+            if (document.querySelector('#print-toggle').checked) {
+                return;
+            }
 
             blocksLayer.eachLayer(function (layer) {
                 const feature = layer.feature;
@@ -1529,17 +1336,6 @@
             });
         }
         map.on('zoomend', updateLabels);
-    </script>
-    <!-- http://127.0.0.1:3000/docs/index.html?distData=4HF,4To,dM,39P|||| -->
-    <script>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                for (id of ['map', 'map-overlay']) {
-                    let el = document.querySelector(`#${id}`)
-                    console.log(`${id} ${el.offsetWidth} x ${el.offsetHeight}`)
-                }
-            }, 500);
-        });
     </script>
 </body>
 
