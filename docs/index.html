@@ -5,13 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OV District Maker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script>
-    <!-- <script src="leaflet.mask.js"></script> -->
+    <!-- <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script> -->
     <!-- <script src="//unpkg.com/alpinejs"></script> -->
     <style>
         :root {
@@ -25,25 +24,6 @@
             --district-color-3: red;
             --district-color-4: violet;
             --district-color-5: blue;
-        }
-
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        #map {
-            flex-grow: 1;
-        }
-
-        #below-map {
-            flex-shrink: 0;
-        }
-
-        #totals {
-            margin: 0;
         }
 
         .label {
@@ -262,64 +242,82 @@
         #below-map label {
             border: gray 1px solid;
         }
+
+        .grayscale-mask {
+            /* -webkit-filter: grayscale(100%); */
+            /* filter: grayscale(100%); */
+            filter: grayscale(1);
+            /* mix-blend-mode: saturation; */
+        }
     </style>
 </head>
 
-<body>
-    <div id="map"></div>
-    <div id="below-map">
-        <label><input type="checkbox" id="blocks-toggle" checked>Show Blocks</label>
-        <label><input type="checkbox" id="boundary-toggle" checked>Show Boundary</label>
-        <label><input type="checkbox" id="district-boundary-toggle" checked>Show District Boundaries</label>
-        <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
-        <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
-                value="100"></label>
+<body style="display: flex;flex-direction: column; min-height: 100vh;">
+    <div id="map-and-map-overlay" style="flex-grow: 1; display: flex; position: relative;">
+        <div id="map" style="flex-grow: 1;"></div>
+        <div id="map-overlay"
+            style="position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%); display: none;">
+
+            <!-- mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>'); -->
+
+            <!-- -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>'); mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>');  -->
+        </div>
     </div>
+    <div id="below-map" style="flex-shrink: 0;">
+        <div>
+            <label><input type="checkbox" id="blocks-toggle" checked>Blocks</label>
+            <label><input type="checkbox" id="boundary-toggle" checked>Boundary</label>
+            <label><input type="checkbox" id="district-boundary-toggle" checked>Dist Boundaries</label>
+            <label><input type="checkbox" id="print-toggle">Printable</label>
+            <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100" value="100"></label>
+            <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
+                    value="100"></label>
+        </div>
+        <div id="totals" style="margin: 0;">
+            <table id="totals-table">
+                <colgroup>
+                    <!-- <col> -->
+                    <col>
+                    <col id="col-1">
+                    <col id="col-2">
+                    <col id="col-3">
+                    <col id="col-4">
+                    <col id="col-5">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <!-- <th scope="col">Not In a District</th> -->
+                        <th scope="col">District Target</th>
+                        <th scope="col">1</th>
+                        <th scope="col">2</th>
+                        <th scope="col" class="col-3">3</th>
+                        <th scope="col" class="col-4">4</th>
+                        <th scope="col" class="col-5">5</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <!-- <td id="total-undistricted"></td> -->
+                        <td id="district-target"></td>
+                        <td id="total-1"></td>
+                        <td id="total-2"></td>
+                        <td id="total-3" class="col-3"></td>
+                        <td id="total-4" class="col-4"></td>
+                        <td id="total-5" class="col-5"></td>
+                    </tr>
+                    <tr>
+                        <!-- <td></td> -->
+                        <td></td>
+                        <td id="percent-1"></td>
+                        <td id="percent-2"></td>
+                        <td id="percent-3" class="col-3"></td>
+                        <td id="percent-4" class="col-4"></td>
+                        <td id="percent-5" class="col-5"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <p id="totals">
-    <table id="totals-table">
-        <colgroup>
-            <!-- <col> -->
-            <col>
-            <col id="col-1">
-            <col id="col-2">
-            <col id="col-3">
-            <col id="col-4">
-            <col id="col-5">
-        </colgroup>
-        <thead>
-            <tr>
-                <!-- <th scope="col">Not In a District</th> -->
-                <th scope="col">District Target</th>
-                <th scope="col">1</th>
-                <th scope="col">2</th>
-                <th scope="col" class="col-3">3</th>
-                <th scope="col" class="col-4">4</th>
-                <th scope="col" class="col-5">5</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <!-- <td id="total-undistricted"></td> -->
-                <td id="district-target"></td>
-                <td id="total-1"></td>
-                <td id="total-2"></td>
-                <td id="total-3" class="col-3"></td>
-                <td id="total-4" class="col-4"></td>
-                <td id="total-5" class="col-5"></td>
-            </tr>
-            <tr>
-                <!-- <td></td> -->
-                <td></td>
-                <td id="percent-1"></td>
-                <td id="percent-2"></td>
-                <td id="percent-3" class="col-3"></td>
-                <td id="percent-4" class="col-4"></td>
-                <td id="percent-5" class="col-5"></td>
-            </tr>
-        </tbody>
-    </table>
-    </p>
     <script>
         const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const cldebug = false;
@@ -365,6 +363,7 @@
         let blocksLayer = null;
         let boundaryLayer = null;
         let districtBoundaryLayer = null;
+        let boundaryLatLongs = [];
         let leafletFeatureToIgnoreClickBecauseMousedownHandledIt = null;
         let grandTotal = 0;
         let districtTarget = undefined;
@@ -714,6 +713,9 @@
                 // data.features = data.features.filter(feature => oids.includes(feature.properties.OBJECTID));
 
                 data.features.forEach(f => {
+                    if (f.properties.OBJECTID === 5417) {
+                        f.properties.PP_TOTAL = 0;
+                    }
                     grandTotal += f.properties.PP_TOTAL;
                     f.properties.district = 1;
                 });
@@ -796,6 +798,7 @@
             })
             .then(() => {
                 processDistData('1pu,zT,1c,72,11,hN,hK,18r,8G,1sv,19O,Ap,22,20u,mz,k5,11N,nP,Uh,JD,hP,i2,oC,k,9w,1j,Ry,1Oh|4p,a,1kO,2j3,GA,iF,SS,sp,6P,Qj,Sp,zY,1Y,1kq,lK,1Kh,SD,A8,f2,i6,Nx,md,hC,UD,JM,iS,RB|fN,1h7,sr,1an,nn,Si,A7,gB,BW,Q1,bz,Su,6p,Tw,j,99,1f6,bT,93,2,xU,KZ,1Ob,2v,96,rj,2JO,1O,ps,hm|vi,11l,4,iO,iW,hg,K4,M,74,8S,YO,1sC,9g,ry,a0,Zt,iO,zf,19A,9m,1,19J,1R8,xb,Ue,2j8,wM,Vl|mS,AY,hw,Aa,iW,Kl,XM,20P,x,ii,iv,1a8,Ai,11q,oM,xa,bY,q6,Ae,So,18y,qs,oF,CG,h1,bj,6r,221');
+                processDistData('1pu,zT,1c,72,11,hN,hK,18r,8G,1sv,19O,Ap,22,20u,mz,k5,11N,nP,Uh,JD,hP,i2,oC,k,9w,1j,Ry,1Oh|4p,a,3DR,GA,iF,SS,sp,6P,Qj,Sp,zY,1Y,1kq,lK,1Kh,SD,A8,f2,i6,Nx,md,hC,UD,JM,iS,RB|fN,1h7,sr,1an,nn,Si,A7,gB,BW,Q1,bz,Su,6p,Tw,j,99,1f6,bT,93,2,xU,KZ,1Ob,2v,96,rj,2JO,1O,ps,hm|vi,11l,4,iO,iW,hg,K4,M,74,8S,YO,1sC,9g,ry,a0,Zt,iO,zf,19A,9m,1,19J,1R8,xb,Ue,2j8,wM,Vl|mS,AY,hw,a1,q9,iW,Kl,XM,20P,x,ii,iv,1a8,Ai,11q,oM,xa,bY,q6,Ae,So,18y,qs,oF,CG,h1,bj,6r,221');
                 processDistDataFromUrl();
                 // fetch('bound-from-qgis.geojson')
                 fetch('boundary_07_30_24_without_gaps.geojson')
@@ -817,30 +820,108 @@
                         }
 
                         // New code here
-                        // function lineToPolygon(data) {
-                        //     let coordinates = data.features[0].geometry.coordinates;
-                        //     if (data.features[0].geometry.type === 'LineString') {
-                        //         coordinates = [coordinates];
-                        //     }
-                        //     return {
-                        //         type: 'Feature',
-                        //         geometry: {
-                        //             type: 'Polygon',
-                        //             coordinates: coordinates
-                        //         }
-                        //     };
+                        function lineToPolygon(data) {
+                            let coordinates = data.features[0].geometry.coordinates;
+                            if (data.features[0].geometry.type === 'LineString') {
+                                coordinates = [coordinates];
+                            }
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Polygon',
+                                    coordinates: coordinates
+                                }
+                            };
+                        }
+                        // Convert line to polygon
+                        let insidePolygon = lineToPolygon(data);
+
+                        boundaryLayer.eachLayer(function (layer) {
+                            if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+                                boundaryLatLongs.push(layer.getLatLngs()); // Push LatLngs of each polygon/polyline
+                            }
+                        });
+
+
+                        // points = "0,0 100,0, 100,100";
+                        // points = "0,100 100,100, 100,99 0,99";
+                        // points = "0,0 100,0, 100,1 0,1";
+                        // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${points}" fill="%23000000"/></svg>')`;
+
+
+
+                        // function convertGeoJSONtoSVGPoints(coordinates, bounds) {
+                        //     // Get the bounds of your data
+                        //     const minLng = bounds.getWest();  // -117
+                        //     const maxLng = bounds.getEast();  // -116
+                        //     const minLat = bounds.getSouth();
+                        //     const maxLat = bounds.getNorth();
+
+                        //     // Convert each coordinate to percentage (0-100 range)
+                        //     // Note the inverted y-coordinate calculation (100 - y)
+                        //     const points = data.features[0].geometry.coordinates.map(coord => {
+                        //         const x = (((coord[0] - minLng) / (maxLng - minLng)) * 100).toFixed(2);
+                        //         const y = (100 - ((coord[1] - minLat) / (maxLat - minLat)) * 100).toFixed(2);
+                        //         return `${x},${y}`;
+                        //     });
+
+                        //     return points.join(' ');
                         // }
-                        // // Convert line to polygon
-                        // let polygonData = lineToPolygon(data);
 
-                        // console.log(map);
-                        // maskLayer = L.mask(polygonData, {
-                        //     fillOpacity: 0.9,
-                        //     fillColor: '#ff0000',
-                        //     interactive: false
-                        // });
+                        // let points = convertGeoJSONtoSVGPoints(data.features[0].geometry.coordinates, map.getBounds());
 
-                        // maskLayer.addTo(map);
+                        // const bounds = map.getBounds();
+                        // console.log(bounds.getWest().toFixed(6), bounds.getEast().toFixed(6), bounds.getSouth().toFixed(6), bounds.getNorth().toFixed(6));
+                        // const minLng = bounds.getWest();  // -117
+                        // const maxLng = bounds.getEast();  // -116
+                        // const minLat = bounds.getSouth();
+                        // const maxLat = bounds.getNorth();
+                        // const x = data.features[0].geometry.coordinates[0][0];
+                        // console.log(`${x.toFixed(6)}, ${((x - minLng) * 100).toFixed(4)}`);
+
+
+                        // // points = "0,0 100,0, 100,100";
+                        // // points = "0,100 100,100, 100,99 0,99";
+                        // // points = "0,0 100,0, 100,1 0,1";
+                        // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${points}" fill="%23000000"/></svg>')`;
+
+
+                        // // Get the map container dimensions
+                        // const mapWidth = map.getContainer().offsetWidth;
+                        // const mapHeight = map.getContainer().offsetHeight;
+                        // const aspectRatio = mapWidth / mapHeight;
+
+                        // Update the SVG viewBox to match the aspect ratio
+                        //                     document.querySelector('#map-overlay').style.maskImage =
+                        //                         `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" 
+                        // width="100" height="100" viewBox="0 0 100 100" 
+                        // preserveAspectRatio="none">
+                        // <polygon points="${points}" fill="%23000000"/></svg>')`;
+                        // // make a new polygon of the displayed map bounds
+                        // let bounds = map.getBounds();
+                        // const expansionConst = 0.2;
+                        // let boundsPolygon = {
+                        //     type: 'Feature',
+                        //     geometry: {
+                        //         type: 'Polygon',
+                        //         coordinates: [
+                        //             [
+                        //                 [bounds.getWest() - expansionConst, bounds.getSouth() - expansionConst],
+                        //                 [bounds.getEast() + expansionConst, bounds.getSouth() - expansionConst],
+                        //                 [bounds.getEast() + expansionConst, bounds.getNorth() + expansionConst],
+                        //                 [bounds.getWest() - expansionConst, bounds.getNorth() + expansionConst],
+                        //                 [bounds.getWest() - expansionConst, bounds.getSouth() - expansionConst],
+                        //             ]
+                        //         ]
+                        //     }
+                        // };
+
+
+                        // mask-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot;><polygon points=&quot;50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35&quot; fill=&quot;%23000000&quot;/></svg>');
+
+
+                        // subtract insidePolygon from boundsPolygon and display that polygon
+                        // let outsideBoundsPolygon = turf.difference(boundsPolygon, insidePolygon);
                     })
                     .catch(error => console.error('Error loading GeoJSON:', error));
             })
@@ -1249,6 +1330,40 @@
             }
         });
 
+        document.getElementById('print-toggle').addEventListener('change', function () {
+            const el = document.querySelector('#map-overlay');
+            if (this.checked) {
+                const points = boundaryLatLongs[0].map(latlng => {
+                    const point = map.latLngToContainerPoint(latlng); // Convert to pixel coordinates
+                    return `${point.x},${point.y}`; // Format as x,y for SVG
+                }).join(" ");
+
+
+                // Construct an inline SVG string
+                //                         const svgString = `
+                // <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
+                //     <polygon points="${points}" />
+                // </svg>`;
+                const svgString = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
+    <defs>
+        <mask id="hole-mask">
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            <polygon points="${points}" />
+        </mask>
+    </defs>
+    <rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#hole-mask)" />
+</svg>`;
+
+                // Apply as mask-image to a div
+                document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
+
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
         document.getElementById('boundary-toggle').addEventListener('change', function () {
             if (this.checked) {
                 if (boundaryLayer) {
@@ -1416,5 +1531,16 @@
         map.on('zoomend', updateLabels);
     </script>
     <!-- http://127.0.0.1:3000/docs/index.html?distData=4HF,4To,dM,39P|||| -->
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                for (id of ['map', 'map-overlay']) {
+                    let el = document.querySelector(`#${id}`)
+                    console.log(`${id} ${el.offsetWidth} x ${el.offsetHeight}`)
+                }
+            }, 500);
+        });
+    </script>
+</body>
 
 </html>
