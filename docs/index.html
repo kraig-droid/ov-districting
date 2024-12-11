@@ -39,8 +39,8 @@
 
     <script>
         function updateMapOverlay() {
-            const points = boundaryLatLongs[0].map(latlng => {
-                const point = map.latLngToContainerPoint(latlng);
+            const points = combinedPolygon.geometry.coordinates[0].map(([lng, lat]) => {
+                const point = map.latLngToContainerPoint([lat, lng]);
                 return `${point.x},${point.y}`;
             }).join(" ");
 
@@ -57,7 +57,45 @@
 
             document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
         }
+
+        function getUnion(geojsonData) {
+            const features = geojsonData.features;
+
+            if (!features || features.length === 0) {
+                console.warn('No features available to combine.');
+                return;
+            }
+
+            let union = features[0];
+
+            for (let i = 1; i < features.length; i++) {
+                try {
+                    union = turf.union(union, features[i]);
+
+                    if (!union) {
+                        console.error(`Union failed at feature index ${i}.`);
+                        break;
+                    }
+                } catch (error) {
+                    console.error(`Error combining feature at index ${i}:`, error);
+                    break;
+                }
+            }
+
+            if (union) {
+                return union;
+
+            } else {
+                console.error('Failed to combine polygons.');
+            }
+        }
+
         const map = L.map('map').setView([41.3, -111.75], 12);
+        let boundaryLayer = null;
+        let distMultiPolysLayer = null;
+        let combinedPolygon = null;
+        let boundaryLatLongs = [];
+        let distMultiPolysLatLngs = [];
 
         L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -67,8 +105,6 @@
             zoomOffset: -1,
             accessToken: 'pk.eyJ1Ijoia3JhaWdhdGhiaG9tZSIsImEiOiJjbTRjNzVkcTEwNTdpMmlweWNhZzhjODR5In0.aKTTGmrf_m5gAkP0qfuRtg',
         }).addTo(map);
-
-        let boundaryLatLongs = [];
 
         fetch('boundary_07_30_24_without_gaps.geojson')
             .then(response => response.json())
@@ -80,31 +116,42 @@
                             weight: 1.5,
                         };
                     },
-                }).addTo(map);
-
-                boundaryLayer.eachLayer(function (layer) {
-                    if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
-                        boundaryLatLongs.push(layer.getLatLngs());
-                    }
                 });
+
+                // boundaryLayer.eachLayer(function (layer) {
+                //     if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+                //         boundaryLatLongs.push(layer.getLatLngs());
+                //     }
+                // });
 
                 updateMapOverlay();
             });
 
-        fetch('dist-boundaries.geojson')
+        fetch('dist-multipolys.geojson')
             .then(response => response.json())
             .then(data => {
-                boundaryLayer = L.geoJSON(data, {
+                distMultiPolysLayer = L.geoJSON(data, {
                     style: function (feature) {
                         return {
-                            color: 'red',
+                            color: feature.properties.color,
                             weight: 2,
-                            dashArray: '5,5',
-                            lineJoin: 'round',
-                            lineCap: 'square',
+                            fillOpacity: 0.6,
                         };
                     },
                 }).addTo(map);
+
+                combinedPolygon = getUnion(data);
+
+                if (combinedPolygon) {
+                    console.log('Combined Polygon:', combinedPolygon);
+                    // Perform further calculations or processing with combinedPolygon here
+
+                    // Update the map overlay using the union polygon
+                    updateMapOverlay();
+                } else {
+                    console.error('Failed to create a union of the polygons.');
+                }
+
             });
 
         const linkControl = L.Control.extend({
