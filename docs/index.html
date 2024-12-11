@@ -35,16 +35,141 @@
                 style="pointer-events: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%);">
             </div>
         </div>
+        <div id="below-map" style="flex-shrink: 0;">
+            <div id="totals" style="display: flex; margin-top: 8px;">
+                <style>
+                    table {
+                        border-collapse: collapse;
+                        margin: auto;
+                        background-color: #ffffff;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+                        border-collapse: collapse;
+
+                    }
+
+                    th,
+                    td {
+                        padding: 4px 8px;
+                        text-align: left;
+                        border-bottom: 1px solid #ddd;
+                        text-align: center;
+                    }
+
+                    th {
+                        background-color: #f8f9fa;
+                        font-weight: 600;
+                        color: #333;
+                    }
+
+                    tbody td:nth-child(2) {
+                        background-color: purple;
+                        color: white;
+                    }
+
+                    tbody td:nth-child(3) {
+                        background-color: blue;
+                        color: white;
+                    }
+
+                    tbody td:nth-child(4) {
+                        background-color: red;
+                        color: white;
+                    }
+
+                    tbody td:nth-child(5) {
+                        background-color: green;
+                        color: white;
+                    }
+
+                    tbody td:nth-child(6) {
+                        background-color: orange;
+                    }
+                </style>
+                <table id="totals-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Target Population</th>
+                            <th scope="col">Liberty</th>
+                            <th scope="col">Wolf Creek</th>
+                            <th scope="col">Eden</th>
+                            <th scope="col">Mid Fork</th>
+                            <th scope="col">South Fork</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="district-target">1330</td>
+                            <td id="total-4">1330</td>
+                            <td id="total-5">1352</td>
+                            <td id="total-3">1344</td>
+                            <td id="total-2">1398</td>
+                            <td id="total-1">1226</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="percent-4">100%</td>
+                            <td id="percent-5">102%</td>
+                            <td id="percent-3">101%</td>
+                            <td id="percent-2">105%</td>
+                            <td id="percent-1">92%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100"
+                        value="100"></label>
+                <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
+                        value="100"></label>
+            </div>
+        </div>
     </div>
 
     <script>
         function updateMapOverlay() {
-            const points = combinedPolygon.geometry.coordinates[0].map(([lng, lat]) => {
+            let points = null;
+            let svgString = null;   
+            // if (!distMultiPolys) {
+            //     return;
+            // }
+            // window.foo = distMultiPolys;
+            // // console.log(distMultiPolys);
+            // distMultiPolys.features[1].geometry.coordinates.forEach((polygonish) => {
+            //     console.log(polygonish);
+            //     polygonish[0].forEach(foo => {
+            //         console.log(typeof foo, foo)
+            //         window.bar = foo;
+            //     })
+            //     points = polygonish[0].map(([lng, lat]) => {
+            //         console.log(lat)
+            //         const point = map.latLngToContainerPoint([lat, lng]);
+            //         return `${point.x},${point.y}`;
+            //     }).join(" ");
+            // });
+            // svgString = `
+            //         <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
+            //             <defs>
+            //                 <mask id="hole-mask">
+            //                     <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            //                     <polygon points="${points}" />
+            //                 </mask>
+            //             </defs>
+            //             <rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#hole-mask)" />
+            //         </svg>`;
+
+            // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
+
+
+            // return;
+            if (!combinedPolygon) {
+                return;
+            }
+            points = combinedPolygon.geometry.coordinates[0].map(([lng, lat]) => {
                 const point = map.latLngToContainerPoint([lat, lng]);
                 return `${point.x},${point.y}`;
             }).join(" ");
 
-            const svgString = `
+            svgString = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
                         <defs>
                             <mask id="hole-mask">
@@ -93,9 +218,12 @@
         const map = L.map('map').setView([41.3, -111.75], 12);
         let boundaryLayer = null;
         let distMultiPolysLayer = null;
+        let distMultiPolys = null;
         let combinedPolygon = null;
-        let boundaryLatLongs = [];
-        let distMultiPolysLatLngs = [];
+        // let boundaryLatLongs = [];
+        const distStyle = {
+            fillOpacity: 0.5,
+        };
 
         L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -130,6 +258,7 @@
         fetch('dist-multipolys.geojson')
             .then(response => response.json())
             .then(data => {
+                distMultiPolys = data;
                 distMultiPolysLayer = L.geoJSON(data, {
                     style: function (feature) {
                         return {
@@ -143,15 +272,10 @@
                 combinedPolygon = getUnion(data);
 
                 if (combinedPolygon) {
-                    console.log('Combined Polygon:', combinedPolygon);
-                    // Perform further calculations or processing with combinedPolygon here
-
-                    // Update the map overlay using the union polygon
                     updateMapOverlay();
                 } else {
                     console.error('Failed to create a union of the polygons.');
                 }
-
             });
 
         const linkControl = L.Control.extend({
@@ -168,6 +292,39 @@
         map.addControl(new linkControl());
 
         map.on('moveend', updateMapOverlay);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const brightnessSlider = document.getElementById('map-brightness-slider');
+            const mapEl = document.querySelector('#map');
+
+            const mapStyle = window.getComputedStyle(mapEl);
+
+            const filterValue = mapStyle.getPropertyValue('filter');
+            const brightnessMatch = filterValue.match(/brightness\(([+-]?\d*\.?\d+)\)/);
+
+            if (brightnessMatch) {
+                const initialBrightness = parseFloat(brightnessMatch[1]);
+                brightnessSlider.value = initialBrightness * 100;
+            }
+
+            brightnessSlider.addEventListener('input', function () {
+                const brightness = this.value / 100;
+                mapEl.style.filter = `brightness(${brightness})`;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const brightnessSlider = document.getElementById('district-brightness-slider');
+            brightnessSlider.value = distStyle.fillOpacity * 100;
+
+            brightnessSlider.addEventListener('input', function () {
+                distStyle.fillOpacity = this.value / 100;
+                distMultiPolysLayer.eachLayer(function (layer) {
+                    layer.setStyle(distStyle);
+                })
+            });
+        });
+
 
     </script>
 </body>
