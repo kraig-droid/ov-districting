@@ -5,11 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OV District Viewer</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" crossorigin="anonymous">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://unpkg.com/leaflet-easyprint@2.1.9/dist/bundle.js"></script>
+    <script src="https://unpkg.com/leaflet-easyprint@2.1.9/dist/bundle.js.map"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         .districting-link {
             padding: 6px 10px;
@@ -24,10 +27,15 @@
         .districting-link:hover {
             background: #f4f4f4;
         }
+
+        .easyPrintHolder .pngDownload {
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4gPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IndoaXRlIi8+IDxwYXRoIGQ9Ik0gMjAsNTAgTCA4MCw1MCBMIDUwLDgwIFoiIGZpbGw9ImJsYWNrIi8+IDxwYXRoIGQ9Ik0gNTAsMjAgTCA1MCw2MCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSI1Ii8+IDwvc3ZnPg==);
+        }
     </style>
 </head>
 
-<body style="height: 100vh; margin: 0; padding: 0;">
+<body style="height: 100vh; margin: 0; padding: 0;" x-data="{selectedDistrict: 'all'}"
+    x-init="$watch('selectedDistrict', changeDistrict)">
     <div style="height: 100%; padding: 4px; display: flex; flex-direction: column; box-sizing: border-box;">
         <div id="map-and-map-overlay" style="flex-grow: 1; display: flex; position: relative;">
             <div id="map" style="flex-grow: 1;"></div>
@@ -117,6 +125,13 @@
                 </table>
             </div>
             <div>
+                <label><input type="radio" x-model="selectedDistrict" value="all">All</label>
+                <label><input type="radio" x-model="selectedDistrict" value="1">Liberty</label>
+                <label><input type="radio" x-model="selectedDistrict" value="2">Wolf Creek</label>
+                <label><input type="radio" x-model="selectedDistrict" value="3">Eden</label>
+                <label><input type="radio" x-model="selectedDistrict" value="4">Mid Fork</label>
+                <label><input type="radio" x-model="selectedDistrict" value="5">South Fork</label>
+                <span style="padding: 25px;"></span>
                 <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100"
                         value="100"></label>
                 <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
@@ -126,15 +141,69 @@
     </div>
 
     <script>
-        function updateMapOverlay() {
+        function changeDistrict(newlySelectedDistrict) {
+            selectedDistrict = newlySelectedDistrict;
+            Object.values(distLayers).forEach(layer => map.removeLayer(layer));
+
+            if (!newlySelectedDistrict || newlySelectedDistrict === 'all') {
+                Object.values(distLayers).forEach(layer => map.addLayer(layer));
+            } else {
+                distLayers[newlySelectedDistrict].addTo(map);
+            };
+            updateMapOverlay(newlySelectedDistrict);
+
+        };
+        function updateMapOverlay(selectedDistrict) {
             let points = null;
-            let svgString = null;   
-            // if (!distMultiPolys) {
-            //     return;
-            // }
-            // window.foo = distMultiPolys;
-            // // console.log(distMultiPolys);
-            // distMultiPolys.features[1].geometry.coordinates.forEach((polygonish) => {
+            let svgString = null;
+            if (Object.keys(distLayers).length === 0) {
+                return;
+            }
+            window.foo = distLayers;
+
+            let polygonMasks = '';
+
+            if (selectedDistrict && selectedDistrict !== 'all') {
+
+                console.log(selectedDistrict)
+
+                distLayers[selectedDistrict].eachLayer(layer => {
+                    window.qqq = layer.feature.geometry.coordinates;
+                    layer.feature.geometry.coordinates.forEach(thing => {
+                        window.thing = thing;
+                        const points = thing[0].map(([lng, lat]) => {
+                            const point = map.latLngToContainerPoint([lat, lng]);
+                            return `${point.x},${point.y}`;
+                        }).join(" ");
+                        polygonMasks += `<polygon points="${points}" />`;
+                    });
+
+                });
+                // distMultiPolys.features[selectedDistrict - 1].geometry.coordinates.forEach((polygonish) => {
+                //     const points = polygonish[0].map(([lng, lat]) => {
+                //         const point = map.latLngToContainerPoint([lat, lng]);
+                //         return `${point.x},${point.y}`;
+                //     }).join(" ");
+
+                //     polygonMasks += `<polygon points="${points}" />`;
+                // });
+
+                svgString = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${map.getSize().x}" height="${map.getSize().y}" viewBox="0 0 ${map.getSize().x} ${map.getSize().y}" preserveAspectRatio="none">
+        <defs>
+            <mask id="hole-mask">
+                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                ${polygonMasks}
+            </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#hole-mask)" />
+    </svg>`;
+                document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
+                return;
+
+            };
+
+            // distMultiPolys.features[0].geometry.coordinates.forEach((polygonish) => {
             //     console.log(polygonish);
             //     polygonish[0].forEach(foo => {
             //         console.log(typeof foo, foo)
@@ -158,8 +227,6 @@
             //         </svg>`;
 
             // document.querySelector('#map-overlay').style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgString)}')`;
-
-
             // return;
             if (!combinedPolygon) {
                 return;
@@ -217,7 +284,9 @@
 
         const map = L.map('map').setView([41.3, -111.75], 12);
         let boundaryLayer = null;
-        let distMultiPolysLayer = null;
+        // let distMultiPolysLayer = null;
+        let distLayers = {};
+        let selectedDistrict = 'all';
         let distMultiPolys = null;
         let combinedPolygon = null;
         // let boundaryLatLongs = [];
@@ -225,13 +294,27 @@
             fillOpacity: 0.5,
         };
 
-        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        const tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
             id: 'mapbox/streets-v11', // You can replace this with other Mapbox styles like 'mapbox/satellite-v9'
             tileSize: 512,
             zoomOffset: -1,
             accessToken: 'pk.eyJ1Ijoia3JhaWdhdGhiaG9tZSIsImEiOiJjbTRjNzVkcTEwNTdpMmlweWNhZzhjODR5In0.aKTTGmrf_m5gAkP0qfuRtg',
+        }).addTo(map);
+
+
+        L.easyPrint({
+            title: 'My awesome print button',
+            position: 'bottomright',
+            sizeModes: [{
+                name: '3240x3240',
+                className: 'pngDownload',
+                width: 3240,
+                height: 3240,
+            }],
+            tileLayer: tileLayer,
+            exportOnly: true,
         }).addTo(map);
 
         fetch('boundary_07_30_24_without_gaps.geojson')
@@ -259,15 +342,28 @@
             .then(response => response.json())
             .then(data => {
                 distMultiPolys = data;
-                distMultiPolysLayer = L.geoJSON(data, {
-                    style: function (feature) {
-                        return {
-                            color: feature.properties.color,
-                            weight: 2,
-                            fillOpacity: 0.6,
-                        };
-                    },
-                }).addTo(map);
+                data.features.forEach(feature => {
+                    const layer = L.geoJSON(feature, {
+                        style: function (feature) {
+                            return {
+                                color: feature.properties.color || '#3388ff', // Default color if not specified
+                                weight: 2,
+                                fillOpacity: 0.6,
+                            };
+                        }
+                    });
+                    distLayers[feature.properties.fid] = layer;
+                    layer.addTo(map);
+                });
+                // distMultiPolysLayer = L.geoJSON(data, {
+                //     style: function (feature) {
+                //         return {
+                //             color: feature.properties.color,
+                //             weight: 2,
+                //             fillOpacity: 0.6,
+                //         };
+                //     },
+                // }).addTo(map);
 
                 combinedPolygon = getUnion(data);
 
@@ -291,7 +387,7 @@
         // Add the custom control to the map
         map.addControl(new linkControl());
 
-        map.on('moveend', updateMapOverlay);
+        map.on('moveend', () => updateMapOverlay());
 
         document.addEventListener('DOMContentLoaded', function () {
             const brightnessSlider = document.getElementById('map-brightness-slider');
@@ -319,9 +415,10 @@
 
             brightnessSlider.addEventListener('input', function () {
                 distStyle.fillOpacity = this.value / 100;
-                distMultiPolysLayer.eachLayer(function (layer) {
-                    layer.setStyle(distStyle);
-                })
+                Object.values(distLayers).forEach(layer => layer.setStyle(distStyle));
+                // distMultiPolysLayer.eachLayer(function (layer) {
+                //     layer.setStyle(distStyle);
+                // })
             });
         });
 

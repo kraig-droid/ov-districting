@@ -1337,6 +1337,19 @@
             });
         }
         map.on('zoomend', updateLabels);
+        const linkControl = L.Control.extend({
+            options: { position: 'topright' },
+
+            onAdd: function () {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                container.innerHTML = '<a style="box-sizing: border-box; width: 100%; padding: 0px 4px;" href="/">Viewing</a>';
+                return container;
+            }
+        });
+
+        // Add the custom control to the map
+        map.addControl(new linkControl());
+
     </script>
 </body>
 
