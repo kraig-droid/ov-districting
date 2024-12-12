@@ -558,7 +558,7 @@
                     }
                     arrays = arrays.map(compressArray);
                     const safeData = arrays.map((x) => x.join(',')).join('|');
-                    const url = `https://districting.hbhome.org/?distData=${safeData}`;
+                    const url = `https://districting.hbhome.org/districting.html?distData=${safeData}`;
                     navigator.clipboard.writeText(url);
                 });
 
