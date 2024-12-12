@@ -135,7 +135,7 @@
                 <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100"
                         value="100"></label>
                 <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
-                        value="100"></label>
+                        value="33"></label>
             </div>
         </div>
     </div>
@@ -159,8 +159,6 @@
             if (Object.keys(distLayers).length === 0) {
                 return;
             }
-            window.foo = distLayers;
-
             let polygonMasks = '';
 
             if (selectedDistrict && selectedDistrict !== 'all') {
@@ -291,7 +289,7 @@
         let combinedPolygon = null;
         // let boundaryLatLongs = [];
         const distStyle = {
-            fillOpacity: 0.5,
+            fillOpacity: 0.33,
         };
 
         const tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -348,7 +346,7 @@
                             return {
                                 color: feature.properties.color || '#3388ff', // Default color if not specified
                                 weight: 2,
-                                fillOpacity: 0.6,
+                                ...distStyle,
                             };
                         }
                     });
@@ -412,6 +410,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const brightnessSlider = document.getElementById('district-brightness-slider');
             brightnessSlider.value = distStyle.fillOpacity * 100;
+            Object.values(distLayers).forEach(layer => layer.setStyle(distStyle));
 
             brightnessSlider.addEventListener('input', function () {
                 distStyle.fillOpacity = this.value / 100;
