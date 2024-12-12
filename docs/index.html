@@ -131,7 +131,7 @@
                 <label><input type="radio" x-model="selectedDistrict" value="3">Eden</label>
                 <label><input type="radio" x-model="selectedDistrict" value="4">Mid Fork</label>
                 <label><input type="radio" x-model="selectedDistrict" value="5">South Fork</label>
-                <span style="padding: 25px;"></span>
+                <span style="padding-right: 50px;"></span>
                 <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100"
                         value="100"></label>
                 <label>District Brightness: <input type="range" id="district-brightness-slider" min="0" max="100"
@@ -310,8 +310,8 @@
             sizeModes: [{
                 name: '3240x3240',
                 className: 'pngDownload',
-                width: 3240,
-                height: 3240,
+                width: 300 * 36,
+                height: 300 * 36,
             }],
             tileLayer: tileLayer,
             exportOnly: true,
