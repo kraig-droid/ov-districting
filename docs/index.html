@@ -166,9 +166,7 @@
                 console.log(selectedDistrict)
 
                 distLayers[selectedDistrict].eachLayer(layer => {
-                    window.qqq = layer.feature.geometry.coordinates;
                     layer.feature.geometry.coordinates.forEach(thing => {
-                        window.thing = thing;
                         const points = thing[0].map(([lng, lat]) => {
                             const point = map.latLngToContainerPoint([lat, lng]);
                             return `${point.x},${point.y}`;
@@ -336,7 +334,7 @@
                 updateMapOverlay();
             });
 
-        fetch('dist-multipolys.geojson')
+            fetch('bounds-from-rebuilt-weber.geojson')
             .then(response => response.json())
             .then(data => {
                 distMultiPolys = data;
