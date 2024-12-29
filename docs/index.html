@@ -64,8 +64,7 @@
         <div id="map-and-map-overlay" style="flex-grow: 1; display: flex; position: relative;">
             <div id="map" style="flex-grow: 1;"></div>
             <div id="map-overlay"
-                zstyle="pointer-events: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%);"
-                style="display: none;">
+                style="pointer-events: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%);">
             </div>
         </div>
         <div id="below-map" style="flex-shrink: 0;">
@@ -190,7 +189,7 @@
             }
             let polygonMasks = '';
 
-            if (selectedDistrict && selectedDistrict !== 'all') {
+            if (false && selectedDistrict && selectedDistrict !== 'all') {
 
                 console.log(selectedDistrict)
 
