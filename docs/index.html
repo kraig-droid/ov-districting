@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/leaflet-easyprint@2.1.9/dist/bundle.js"></script>
     <script src="https://unpkg.com/leaflet-easyprint@2.1.9/dist/bundle.js.map"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.js"></script>
     <style>
         .districting-link {
             padding: 6px 10px;
@@ -34,13 +34,38 @@
     </style>
 </head>
 
-<body style="height: 100vh; margin: 0; padding: 0;" x-data="{selectedDistrict: 'all'}"
-    x-init="$watch('selectedDistrict', changeDistrict)">
+<body style="height: 100vh; margin: 0; padding: 0;"
+    x-data="{selectedDistrict: 'all'}"
+    x-init="$watch('selectedDistrict', changeDistrict)"
+    x-on:dists-loaded.window="
+        selectedDistrict = (new URLSearchParams(window.location.search)).get('district') || 'all';
+        if (selectedDistrict === 'all') {
+            // map.fitBounds(distMultiPolys.getBounds());
+            let combinedBounds = L.latLngBounds();
+            Object.keys(distLayers).forEach(key => {
+                combinedBounds.extend(distLayers[key].getBounds());
+            });
+            map.fitBounds(combinedBounds);
+        } else {
+            console.log('District Bounds:', distLayers[selectedDistrict].getBounds());
+            console.log('Map Bounds Before Fit:', map.getBounds());
+            
+            map.fitBounds(distLayers[selectedDistrict].getBounds(), {
+                padding: [20, 20], // Ensure no padding is explicitly added
+            });
+            
+            // Log the map bounds after fitBounds
+            console.log('Map Bounds After Fit:', map.getBounds());
+            
+        };
+    "
+>
     <div style="height: 100%; padding: 4px; display: flex; flex-direction: column; box-sizing: border-box;">
         <div id="map-and-map-overlay" style="flex-grow: 1; display: flex; position: relative;">
             <div id="map" style="flex-grow: 1;"></div>
             <div id="map-overlay"
-                style="pointer-events: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%);">
+                zstyle="pointer-events: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 1000; backdrop-filter: grayscale(100%);"
+                style="display: none;">
             </div>
         </div>
         <div id="below-map" style="flex-shrink: 0;">
@@ -141,8 +166,12 @@
     </div>
 
     <script>
+        const usp = new URLSearchParams(window.location.search);
+        const initialZoom = usp.get('zoom') || 12;
         function changeDistrict(newlySelectedDistrict) {
-            selectedDistrict = newlySelectedDistrict;
+            if (Object.keys(distLayers).length === 0) {
+                return;
+            }
             Object.values(distLayers).forEach(layer => map.removeLayer(layer));
 
             if (!newlySelectedDistrict || newlySelectedDistrict === 'all') {
@@ -278,11 +307,12 @@
             }
         }
 
-        const map = L.map('map').setView([41.3, -111.75], 12);
+        const map = L.map('map', {
+            zoomSnap: 0,
+        }).setView([41.3, -111.75], initialZoom);
         let boundaryLayer = null;
         // let distMultiPolysLayer = null;
         let distLayers = {};
-        let selectedDistrict = 'all';
         let distMultiPolys = null;
         let combinedPolygon = null;
         // let boundaryLatLongs = [];
@@ -334,7 +364,7 @@
                 updateMapOverlay();
             });
 
-            fetch('bounds-from-rebuilt-weber.geojson')
+        fetch('bounds-from-rebuilt-weber.geojson')
             .then(response => response.json())
             .then(data => {
                 distMultiPolys = data;
@@ -360,6 +390,9 @@
                 //         };
                 //     },
                 // }).addTo(map);
+
+                window.dispatchEvent(new CustomEvent('dists-loaded'));
+                console.log('distLayers', distLayers);
 
                 combinedPolygon = getUnion(data);
 
