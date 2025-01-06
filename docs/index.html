@@ -329,14 +329,23 @@
         }).addTo(map);
 
 
+        const MIN_PX = 300 * 23;
+        const MAX_PX = 300 * 35;
+        // 16.2 for Middle Fork
+        // 15.1 for full map
         L.easyPrint({
             title: 'My awesome print button',
             position: 'bottomright',
             sizeModes: [{
-                name: '3240x3240',
+                name: `${MIN_PX} x ${MIN_PX} px`,
                 className: 'pngDownload',
-                width: 300 * 36,
-                height: 300 * 36,
+                width: MIN_PX,
+                height: MIN_PX,
+            },{
+                name: `${MAX_PX} x ${MIN_PX} px`,
+                className: 'pngDownload',
+                width: MAX_PX,
+                height: MIN_PX,
             }],
             tileLayer: tileLayer,
             exportOnly: true,
