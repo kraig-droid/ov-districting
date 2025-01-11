@@ -1,0 +1,28 @@
+"OBJECTID": 5871,
+    "NAME20": "Block 1070",
+    "PP_TOTAL": 29,
+powder mountain -- one house in city -- originally pink/liberty
+
+"OBJECTID": 5417,
+    "NAME20": "Block 1065",
+    "PP_TOTAL": 29,
+also powmow -- one house in city
+
+"OBJECTID": 6861,
+    "NAME20": "Block 2013",
+    "PP_TOTAL": 45,
+northern Huntsville
+
+"OBJECTID": 8797,
+    "NAME20": "Block 2047",
+    "PP_TOTAL": 54,
+southern most Huntsville
+
+"OBJECTID": 35805,
+    "NAME20": "Block 1123",
+    "PP_TOTAL": 16,
+eastern Huntsville
+
+"OBJECTID": 34439,
+    "NAME20": "Block 2049",
+    "PP_TOTAL": 0,

@@ -373,11 +373,18 @@
         //     attribution: '© OpenStreetMap contributors',
         //     className: 'dimmed-map',
         // }).addTo(map);
-        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        L.tileLayer('https://api.mapbox.com/styles/v1/kraigathbhome/cm5re56q400je01ra9hsnc9g9/tiles/{z}/{x}/{y}?access_token={accessToken}', {
             attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
-            id: 'mapbox/streets-v11', // You can change this to other styles
+            tileSize: 512, // Use 512 for high-DPI tiles
+            zoomOffset: -1, // Adjust zoom level for high-DPI tiles
             accessToken: 'pk.eyJ1Ijoia3JhaWdhdGhiaG9tZSIsImEiOiJjbTRjNzVkcTEwNTdpMmlweWNhZzhjODR5In0.aKTTGmrf_m5gAkP0qfuRtg'
         }).addTo(map);
+
+        // L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        //     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+        //     id: 'mapbox/streets-v11', // You can change this to other styles
+        //     accessToken: 'pk.eyJ1Ijoia3JhaWdhdGhiaG9tZSIsImEiOiJjbTRjNzVkcTEwNTdpMmlweWNhZzhjODR5In0.aKTTGmrf_m5gAkP0qfuRtg'
+        // }).addTo(map);
 
         L.Control.ModeSwitch = L.Control.extend({
             options: {
@@ -624,13 +631,17 @@
             fillOpacity: 0.6,
         }
 
-        // fetch blocks
-        fetch('candidate-blocks-3_trimmed.geojson')
+        fetch(
+            'candidate-blocks-2.geojson'
+            // 'candidate-blocks-3_trimmed.geojson'
+        )
             .then(response => response.json())
             .then(data => {
                 data.features = data.features.filter(feature => feature.properties.PP_TOTAL !== 0);
                 // oids = [1940, 5884, 7037, 7038, 8159, 8222, 9325, 12623, 20217, 22563, 26912, 31566, 35805, 51442, 59164]
                 // data.features = data.features.filter(feature => oids.includes(feature.properties.OBJECTID));
+                oids = new Set([-5871, 5417, 6861, 8797, 35805]);
+                data.features = data.features.filter(feature => !oids.has(feature.properties.OBJECTID));
 
                 data.features.forEach(f => {
                     if (f.properties.OBJECTID === 5417) {
@@ -1259,8 +1270,13 @@
 
             let largestDistrictFoundInFile = 2;
             blocksLayer.eachLayer(l => {
-                const district = data[l.feature.properties.OBJECTID];
+                let district = data[l.feature.properties.OBJECTID];
                 l.feature.properties.district = district || undefined;
+                // if (l.feature.properties.OBJECTID === 35805) {
+                //     district = 2;
+                // } else {
+                //     district = 1;
+                // }
                 if (district) {
                     largestDistrictFoundInFile = Math.max(largestDistrictFoundInFile, district);
                     l.setStyle({
