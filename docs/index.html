@@ -147,11 +147,11 @@
             </div>
             <div>
                 <label><input type="radio" x-model="selectedDistrict" value="all">All</label>
-                <label><input type="radio" x-model="selectedDistrict" value="1">Liberty</label>
-                <label><input type="radio" x-model="selectedDistrict" value="2">Wolf Creek</label>
-                <label><input type="radio" x-model="selectedDistrict" value="3">Eden</label>
-                <label><input type="radio" x-model="selectedDistrict" value="4">Mid Fork</label>
-                <label><input type="radio" x-model="selectedDistrict" value="5">South Fork</label>
+                <label><input type="radio" x-model="selectedDistrict" value="1">Purple (1)</label>
+                <label><input type="radio" x-model="selectedDistrict" value="2">Red (2)</label>
+                <label><input type="radio" x-model="selectedDistrict" value="3">Blue (3)</label>
+                <label><input type="radio" x-model="selectedDistrict" value="4">Green (4)</label>
+                <label><input type="radio" x-model="selectedDistrict" value="5">Orange (5)</label>
                 <span style="padding-right: 50px;"></span>
                 <label>Map Brightness: <input type="range" id="map-brightness-slider" min="0" max="100"
                         value="100"></label>
@@ -164,6 +164,7 @@
     <script>
         const usp = new URLSearchParams(window.location.search);
         const initialZoom = usp.get('zoom') || 12;
+
         function changeDistrict(newlySelectedDistrict) {
             if (Object.keys(distLayers).length === 0) {
                 return;
@@ -176,8 +177,8 @@
                 distLayers[newlySelectedDistrict].addTo(map);
             };
             updateMapOverlay(newlySelectedDistrict);
-
         };
+
         function updateMapOverlay(selectedDistrict) {
             let points = null;
             let svgString = null;
@@ -390,7 +391,7 @@
                             };
                         }
                     });
-                    distLayers[feature.properties.fid] = layer;
+                    distLayers[feature.properties.id] = layer;
                     layer.addTo(map);
                 });
                 // distMultiPolysLayer = L.geoJSON(data, {
