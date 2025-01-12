@@ -34,10 +34,8 @@
     </style>
 </head>
 
-<body style="height: 100vh; margin: 0; padding: 0;"
-    x-data="{selectedDistrict: 'all'}"
-    x-init="$watch('selectedDistrict', changeDistrict)"
-    x-on:dists-loaded.window="
+<body style="height: 100vh; margin: 0; padding: 0;" x-data="{selectedDistrict: 'all'}"
+    x-init="$watch('selectedDistrict', changeDistrict)" x-on:dists-loaded.window="
         selectedDistrict = (new URLSearchParams(window.location.search)).get('district') || 'all';
         if (selectedDistrict === 'all') {
             // map.fitBounds(distMultiPolys.getBounds());
@@ -58,8 +56,7 @@
             console.log('Map Bounds After Fit:', map.getBounds());
             
         };
-    "
->
+    ">
     <div style="height: 100%; padding: 4px; display: flex; flex-direction: column; box-sizing: border-box;">
         <div id="map-and-map-overlay" style="flex-grow: 1; display: flex; position: relative;">
             <div id="map" style="flex-grow: 1;"></div>
@@ -99,12 +96,12 @@
                     }
 
                     tbody td:nth-child(3) {
-                        background-color: blue;
+                        background-color: red;
                         color: white;
                     }
-
+                    
                     tbody td:nth-child(4) {
-                        background-color: red;
+                        background-color: blue;
                         color: white;
                     }
 
@@ -121,29 +118,29 @@
                     <thead>
                         <tr>
                             <th scope="col">Target Population</th>
-                            <th scope="col">Liberty</th>
-                            <th scope="col">Wolf Creek</th>
-                            <th scope="col">Eden</th>
-                            <th scope="col">Mid Fork</th>
-                            <th scope="col">South Fork</th>
+                            <th scope="col">Purple (1)</th>
+                            <th scope="col">Red (2)</th>
+                            <th scope="col">Blue (3)</th>
+                            <th scope="col">Green (4)</th>
+                            <th scope="col">Orange (5)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td id="district-target">1330</td>
-                            <td id="total-4">1330</td>
-                            <td id="total-5">1352</td>
-                            <td id="total-3">1344</td>
-                            <td id="total-2">1398</td>
-                            <td id="total-1">1226</td>
+                            <td id="total-4">1371</td>
+                            <td id="total-5">1295</td>
+                            <td id="total-3">1381</td>
+                            <td id="total-2">1304</td>
+                            <td id="total-1">1299</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td id="percent-4">100%</td>
-                            <td id="percent-5">102%</td>
-                            <td id="percent-3">101%</td>
-                            <td id="percent-2">105%</td>
-                            <td id="percent-1">92%</td>
+                            <td id="percent-4">103%</td>
+                            <td id="percent-5">97%</td>
+                            <td id="percent-3">104%</td>
+                            <td id="percent-2">98%</td>
+                            <td id="percent-1">98%</td>
                         </tr>
                     </tbody>
                 </table>
@@ -341,7 +338,7 @@
                 className: 'pngDownload',
                 width: MIN_PX,
                 height: MIN_PX,
-            },{
+            }, {
                 name: `${MAX_PX} x ${MIN_PX} px`,
                 className: 'pngDownload',
                 width: MAX_PX,
@@ -369,10 +366,17 @@
                 //     }
                 // });
 
+                // zoom the map to fit the data
+                console.log(boundaryLayer.getBounds());
+
+
                 updateMapOverlay();
+                setTimeout(() => {
+                    map.fitBounds(boundaryLayer.getBounds());
+                }, 0);
             });
 
-        fetch('bounds-from-rebuilt-weber.geojson')
+        fetch('districts-v2.geojson')
             .then(response => response.json())
             .then(data => {
                 distMultiPolys = data;
